@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#173f2a" />
+  <meta name="description" content="MyFarmBox Singapore — thoughtfully curated, naturally grown produce, arriving soon." />
+  <title>MyFarmBox Singapore — Coming Soon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page-shell">
+    <nav class="nav">
+      <a class="brand" href="/" aria-label="MyFarmBox Singapore home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" role="img">
+            <path d="M24 42C13.7 35.9 9 28.6 9 20.8 9 12.5 15.5 6 24 6s15 6.5 15 14.8C39 28.6 34.3 35.9 24 42Z"/>
+            <path class="leaf-line" d="M24 35V14m0 7c-4-5-8-5-11-4m11 10c5-5 9-5 12-4"/>
+          </svg>
+        </span>
+        <span>
+          <strong>MyFarmBox</strong>
+          <small>Singapore</small>
+        </span>
+      </a>
+      <a class="nav-link" href="mailto:hello@myfarmbox.sg">hello@myfarmbox.sg</a>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> Something fresh is taking root</p>
+        <h1>Harvested with care.<br><em>Coming closer to home.</em></h1>
+        <p class="intro">
+          MyFarmBox is arriving in Singapore with thoughtfully curated,
+          <strong>100% Natural Produce</strong> and a simpler way to bring
+          fresh harvests into your everyday life.
+        </p>
+
+        <form class="interest-form" action="https://formsubmit.co/hello@myfarmbox.sg" method="POST">
+          <input type="hidden" name="_subject" value="MyFarmBox.sg Early Access Interest">
+          <input type="hidden" name="_captcha" value="false">
+          <label class="sr-only" for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="Your email address" required>
+          <button type="submit">Join early access</button>
+        </form>
+        <p class="form-note">Be among the first families to experience MyFarmBox Singapore.</p>
+
+        <div class="trust-row" aria-label="MyFarmBox values">
+          <span>Season-led</span>
+          <i></i>
+          <span>Mindfully sourced</span>
+          <i></i>
+          <span>Home delivered</span>
+        </div>
+      </div>
+
+      <div class="visual" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="arch">
+          <div class="field field-one"></div>
+          <div class="field field-two"></div>
+          <div class="field field-three"></div>
+          <div class="sprout">
+            <span class="stem"></span>
+            <span class="leaf leaf-left"></span>
+            <span class="leaf leaf-right"></span>
+          </div>
+        </div>
+        <div class="tag">
+          <span class="tag-icon">✦</span>
+          <div><small>Launching soon in</small><strong>Singapore</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>© <span id="year"></span> MyFarmBox Singapore</p>
+      <p>Freshness, made personal.</p>
+    </footer>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
