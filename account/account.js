@@ -10,6 +10,9 @@
   let account = null;
   let selectedOrder = null;
   let toastTimer = null;
+  let addressMap = null;
+  let addressMarker = null;
+  const DEFAULT_MAP_CENTER = [1.3521, 103.8198];
 
   const $ = id => document.getElementById(id);
 
@@ -59,6 +62,11 @@
     editPostalCode: $("edit-postal-code"),
     editPlaceName: $("edit-place-name"),
     editDeliveryInstructions: $("edit-delivery-instructions"),
+    editLatLong: $("edit-lat-long"),
+    addressMap: $("address-map"),
+    useCurrentLocation: $("use-current-location"),
+    mapStatus: $("map-status"),
+    mapCoordinates: $("map-coordinates"),
     orderDialogId: $("order-dialog-id"),
     orderDialogDelivery: $("order-dialog-delivery"),
     orderDialogStatus: $("order-dialog-status"),
@@ -388,6 +396,183 @@
     els.profileDialog.showModal();
   }
 
+
+  function parseLatLong(value) {
+    const parts = String(value || "")
+      .split(",")
+      .map(part => Number(part.trim()));
+
+    if (
+      parts.length !== 2 ||
+      !Number.isFinite(parts[0]) ||
+      !Number.isFinite(parts[1])
+    ) {
+      return null;
+    }
+
+    const [lat, lng] = parts;
+
+    if (
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180
+    ) {
+      return null;
+    }
+
+    return [lat, lng];
+  }
+
+  function formatLatLong(lat, lng) {
+    return `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
+  }
+
+  function updateMapFields(lat, lng, message = "Delivery pin selected.") {
+    const value = formatLatLong(lat, lng);
+
+    els.editLatLong.value = value;
+    els.mapCoordinates.textContent = value;
+    els.mapStatus.textContent = message;
+    els.mapStatus.className = "ready";
+  }
+
+  function setMapError(message) {
+    els.mapStatus.textContent = message;
+    els.mapStatus.className = "error";
+  }
+
+  function createOrMoveMarker(lat, lng, message) {
+    if (!addressMap) return;
+
+    const point = [lat, lng];
+
+    if (!addressMarker) {
+      addressMarker = L.marker(point, {
+        draggable: true,
+        autoPan: true
+      }).addTo(addressMap);
+
+      addressMarker.on("dragend", event => {
+        const position = event.target.getLatLng();
+
+        updateMapFields(
+          position.lat,
+          position.lng,
+          "Delivery pin updated."
+        );
+      });
+    } else {
+      addressMarker.setLatLng(point);
+    }
+
+    addressMap.setView(point, Math.max(addressMap.getZoom(), 17));
+    updateMapFields(lat, lng, message);
+  }
+
+  function initialiseAddressMap(savedLatLong) {
+    if (typeof L === "undefined") {
+      setMapError("The map could not be loaded. You can still save the written address.");
+      return;
+    }
+
+    const saved = parseLatLong(savedLatLong);
+    const initial = saved || DEFAULT_MAP_CENTER;
+
+    if (!addressMap) {
+      addressMap = L.map("address-map", {
+        zoomControl: true,
+        attributionControl: true
+      }).setView(initial, saved ? 17 : 11);
+
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 19,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }
+      ).addTo(addressMap);
+
+      addressMap.on("click", event => {
+        createOrMoveMarker(
+          event.latlng.lat,
+          event.latlng.lng,
+          "Delivery pin moved to the selected point."
+        );
+      });
+    }
+
+    window.setTimeout(() => {
+      addressMap.invalidateSize();
+
+      if (saved) {
+        createOrMoveMarker(
+          saved[0],
+          saved[1],
+          "Saved delivery pin loaded."
+        );
+      } else {
+        if (addressMarker) {
+          addressMap.removeLayer(addressMarker);
+          addressMarker = null;
+        }
+
+        addressMap.setView(DEFAULT_MAP_CENTER, 11);
+        els.editLatLong.value = "";
+        els.mapCoordinates.textContent = "";
+        els.mapStatus.textContent =
+          "Tap the map or use your current location.";
+        els.mapStatus.className = "";
+      }
+    }, 180);
+  }
+
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setMapError("Current location is not supported on this device.");
+      return;
+    }
+
+    els.useCurrentLocation.disabled = true;
+    els.useCurrentLocation.textContent = "Finding Location…";
+    els.mapStatus.textContent = "Requesting your current location…";
+    els.mapStatus.className = "";
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        createOrMoveMarker(
+          position.coords.latitude,
+          position.coords.longitude,
+          "Current location selected. Drag the pin if needed."
+        );
+
+        els.useCurrentLocation.disabled = false;
+        els.useCurrentLocation.textContent = "Use Current Location";
+      },
+      error => {
+        const messages = {
+          1: "Location permission was denied.",
+          2: "Your location is currently unavailable.",
+          3: "Location request timed out."
+        };
+
+        setMapError(
+          messages[error.code] ||
+          "We could not find your current location."
+        );
+
+        els.useCurrentLocation.disabled = false;
+        els.useCurrentLocation.textContent = "Use Current Location";
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 60000
+      }
+    );
+  }
+
   function openAddressEditor() {
     const address = account.address || {};
 
@@ -403,8 +588,12 @@
       address.placeName || address.label || "Home";
     els.editDeliveryInstructions.value =
       address.deliveryInstructions || "";
+    els.editLatLong.value =
+      address.latLong || "";
 
     els.addressDialog.showModal();
+
+    initialiseAddressMap(address.latLong || "");
   }
 
   async function postAction(payload) {
@@ -470,7 +659,7 @@
           placeName: els.editPlaceName.value.trim(),
           deliveryInstructions:
             els.editDeliveryInstructions.value.trim(),
-          latLong: account.address?.latLong || ""
+          latLong: els.editLatLong.value.trim()
         }
       });
 
@@ -581,6 +770,7 @@
 
   $("save-profile").onclick = saveProfile;
   $("save-address").onclick = saveAddress;
+  els.useCurrentLocation.onclick = useCurrentLocation;
 
   $("close-order-dialog").onclick = () =>
     els.orderDialog.close();

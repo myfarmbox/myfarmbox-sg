@@ -11,8 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/shared.css?v=10">
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhPRvZ8QvMTs0p4qGJ4sA8lL0jM=" crossorigin="">
+  <link rel="stylesheet" href="/shared.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
   <div id="site-header"></div>
@@ -197,6 +198,28 @@
         <label><span>Postal code</span><input id="edit-postal-code" maxlength="6" required></label>
         <label><span>Label</span><input id="edit-place-name" placeholder="Home"></label>
         <label class="full"><span>Delivery instructions</span><input id="edit-delivery-instructions"></label>
+
+        <div class="full map-section">
+          <div class="map-heading">
+            <div>
+              <span>Delivery pin</span>
+              <small>Drag the pin or tap the map to mark the correct building entrance.</small>
+            </div>
+
+            <button id="use-current-location" type="button">
+              Use Current Location
+            </button>
+          </div>
+
+          <div id="address-map" aria-label="Delivery location map"></div>
+
+          <div class="map-status-row">
+            <span id="map-status">Place the delivery pin.</span>
+            <strong id="map-coordinates"></strong>
+          </div>
+
+          <input id="edit-lat-long" type="hidden">
+        </div>
       </div>
 
       <div class="dialog-actions">
@@ -239,7 +262,8 @@
     </div>
   </aside>
 
-  <script src="/shared.js?v=10"></script>
-  <script src="account.js?v=10"></script>
+  <script src="/shared.js?v=11"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="account.js?v=11"></script>
 </body>
 </html>
