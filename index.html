@@ -10,11 +10,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="site-header"></div>
-  </header>
 
   <main>
     <section class="hero">
@@ -39,26 +45,14 @@
         </div>
 
         <section class="countdown" aria-label="Countdown to MyFarmBox Singapore launch">
-          <div class="count-card">
-            <strong id="days">00</strong>
-            <span>Days</span>
-          </div>
-          <div class="count-card">
-            <strong id="hours">00</strong>
-            <span>Hours</span>
-          </div>
-          <div class="count-card">
-            <strong id="minutes">00</strong>
-            <span>Minutes</span>
-          </div>
-          <div class="count-card">
-            <strong id="seconds">00</strong>
-            <span>Seconds</span>
-          </div>
+          <div class="count-card"><strong id="days">00</strong><span>Days</span></div>
+          <div class="count-card"><strong id="hours">00</strong><span>Hours</span></div>
+          <div class="count-card"><strong id="minutes">00</strong><span>Minutes</span></div>
+          <div class="count-card"><strong id="seconds">00</strong><span>Seconds</span></div>
         </section>
 
         <div id="launch-message" class="launch-message" hidden>
-          <span>🌿</span>
+          <span aria-hidden="true">🌿</span>
           <div>
             <small>MyFarmBox Singapore</small>
             <strong>We are now live.</strong>
@@ -67,7 +61,7 @@
 
         <div class="actions">
           <a id="primary-cta" class="primary" href="join/">
-            Join the Founding Harvest <span>→</span>
+            Join the Founding Harvest <span aria-hidden="true">→</span>
           </a>
           <a class="secondary" href="#story">Discover MyFarmBox</a>
         </div>
@@ -121,19 +115,19 @@
 
       <div class="promise-grid">
         <article>
-          <span class="icon">🌱</span>
+          <span class="icon" aria-hidden="true">🌱</span>
           <h3>100% Natural Produce</h3>
           <p>Thoughtfully sourced produce for the meals your family already enjoys.</p>
         </article>
 
         <article>
-          <span class="icon">🧺</span>
+          <span class="icon" aria-hidden="true">🧺</span>
           <h3>Harvested close to delivery</h3>
           <p>We plan first and prepare your harvest closer to the day it reaches you.</p>
         </article>
 
         <article>
-          <span class="icon">❤️</span>
+          <span class="icon" aria-hidden="true">❤️</span>
           <h3>Planned around your family</h3>
           <p>Choose what your household actually needs—nothing more and nothing less.</p>
         </article>
@@ -143,7 +137,7 @@
 
   <footer>
     <div class="footer-brand">
-      <img src="assets/myfarmbox-logo.webp" alt="">
+      <img src="assets/myfarmbox-logo.webp" alt="MyFarmBox">
       <p>
         MyFarmBox Singapore<br>
         <span>Fresh. Traceable. Thoughtfully delivered.</span>
@@ -152,6 +146,7 @@
     <p>© <span id="year"></span> MyFarmBox</p>
   </footer>
 
+  <script src="shared.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

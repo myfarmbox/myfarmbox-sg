@@ -1,35 +1,35 @@
-async function loadHeader() {
-  const target = document.getElementById("site-header");
+(() => {
+  "use strict";
 
-  if (!target) return;
+  async function loadHeader() {
+    const target = document.getElementById("site-header");
+    if (!target) return;
 
-  try {
-    const response = await fetch("/components/header.html");
+    try {
+      const response = await fetch("/components/header.html", { cache: "no-cache" });
+      if (!response.ok) throw new Error(`Header load failed: ${response.status}`);
 
-    if (!response.ok) {
-      throw new Error(`Header load failed: ${response.status}`);
+      target.innerHTML = await response.text();
+      highlightCurrentPage();
+    } catch (error) {
+      console.error("Unable to load shared header:", error);
     }
-
-    target.innerHTML = await response.text();
-    highlightCurrentPage();
-  } catch (error) {
-    console.error(error);
   }
-}
 
-function highlightCurrentPage() {
-  const currentPath = window.location.pathname;
+  function highlightCurrentPage() {
+    const currentPath = window.location.pathname;
 
-  document.querySelectorAll(".site-nav a").forEach((link) => {
-    const linkPath = new URL(link.href).pathname;
+    document.querySelectorAll(".site-nav a").forEach((link) => {
+      const linkPath = new URL(link.href).pathname;
+      const isHome = linkPath === "/" && currentPath === "/";
+      const isSection = linkPath !== "/" && currentPath.startsWith(linkPath);
 
-    if (
-      currentPath === linkPath ||
-      (linkPath !== "/" && currentPath.startsWith(linkPath))
-    ) {
-      link.classList.add("active");
-    }
-  });
-}
+      if (isHome || isSection) {
+        link.classList.add("active");
+        link.setAttribute("aria-current", "page");
+      }
+    });
+  }
 
-document.addEventListener("DOMContentLoaded", loadHeader);
+  document.addEventListener("DOMContentLoaded", loadHeader);
+})();

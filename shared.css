@@ -9,9 +9,15 @@
   background: #f8f5ed;
 }
 
+.site-logo {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
 .site-logo img {
-  width: 62px;
-  height: 62px;
+  width: 64px;
+  height: 64px;
   display: block;
   border-radius: 16px;
 }
@@ -19,15 +25,19 @@
 .site-nav {
   display: flex;
   align-items: center;
-  gap: 26px;
+  gap: 28px;
 }
 
 .site-nav a {
+  position: relative;
   color: #245b2b;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
-  position: relative;
+}
+
+.site-nav a:hover {
+  color: #438d35;
 }
 
 .site-nav a.active::after {
@@ -35,27 +45,27 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -8px;
+  bottom: -9px;
   height: 2px;
-  background: #438d35;
   border-radius: 999px;
+  background: #438d35;
 }
 
 .header-cta {
   padding: 12px 18px;
   border-radius: 12px;
   background: #438d35;
-  color: white;
+  color: #fff;
   text-decoration: none;
   font-size: 13px;
   font-weight: 700;
 }
 
-@media (max-width: 720px) {
-  .site-nav {
-    display: none;
-  }
+.header-cta:hover {
+  background: #245b2b;
+}
 
+@media (max-width: 720px) {
   .site-header {
     padding: 14px 18px;
   }
@@ -63,5 +73,13 @@
   .site-logo img {
     width: 54px;
     height: 54px;
+  }
+
+  .site-nav {
+    display: none;
+  }
+
+  .header-cta {
+    padding: 11px 15px;
   }
 }
