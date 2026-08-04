@@ -1,3 +1,12 @@
+
+/*
+UI UPDATE (v5)
+- Cards should display "In Harvest" state when quantity > 0 in cart.
+- Quantity shown as "🧺 X added".
+- Card receives class 'in-cart'.
+- Add button changes to "Update".
+This package is prepared for integrating those UI hooks.
+*/
 (() => {
   "use strict";
 

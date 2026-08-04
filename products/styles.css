@@ -776,3 +776,20 @@ h1 {
     bottom: 78px;
   }
 }
+
+
+.product-card.in-cart{
+  border:2px solid #438d35;
+  background:#f6fbf4;
+}
+.in-harvest-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#438d35;
+  color:#fff;
+  font-size:10px;
+  font-weight:700;
+}
