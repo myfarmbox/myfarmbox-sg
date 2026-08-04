@@ -1,1 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#438d35">
+  <meta name="description" content="View your profile, delivery address and harvest history with MyFarmBox Singapore.">
+  <title>My Account — MyFarmBox Singapore</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/shared.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=10">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="shell">
+    <section id="login-view" class="login-card">
+      <div class="login-mark">🌿</div>
+      <p class="eyebrow">My Account</p>
+      <h1>Welcome back.</h1>
+      <p>Enter your mobile number and email to securely open your MyFarmBox Singapore profile.</p>
+
+      <div class="login-grid">
+        <label>
+          <span>Mobile number</span>
+          <input id="login-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+65 8123 4567">
+        </label>
+
+        <label>
+          <span>Email</span>
+          <input id="login-email" type="email" autocomplete="email" placeholder="you@example.com">
+        </label>
+      </div>
+
+      <button id="login-button" type="button">Find My Account</button>
+      <p id="login-message" class="form-message"></p>
+    </section>
+
+    <section id="account-view" hidden>
+      <header class="account-hero">
+        <div class="avatar" id="avatar">MF</div>
+
+        <div class="hero-copy">
+          <p class="eyebrow">Founding Harvest Member</p>
+          <h1>Hello, <span id="hero-name">Member</span>.</h1>
+          <p id="hero-customer-id"></p>
+        </div>
+
+        <div class="hero-actions">
+          <button id="edit-profile-button" type="button">Edit Profile</button>
+          <button id="logout-button" type="button" class="secondary">Switch Account</button>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article>
+          <small>Orders</small>
+          <strong id="stat-orders">0</strong>
+        </article>
+        <article>
+          <small>Total spent</small>
+          <strong id="stat-spent">S$0.00</strong>
+        </article>
+        <article>
+          <small>Upcoming</small>
+          <strong id="stat-upcoming">0</strong>
+        </article>
+        <article>
+          <small>Status</small>
+          <strong id="stat-status">Active</strong>
+        </article>
+      </section>
+
+      <section id="upcoming-section" class="upcoming-card" hidden>
+        <div>
+          <p class="eyebrow">Upcoming Harvest</p>
+          <h2 id="upcoming-order-id"></h2>
+          <p id="upcoming-delivery"></p>
+        </div>
+
+        <div class="upcoming-meta">
+          <span id="upcoming-order-status"></span>
+          <strong id="upcoming-total"></strong>
+          <button id="upcoming-view-button" type="button">View Order</button>
+        </div>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel profile-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Profile</p>
+              <h2>Your information</h2>
+            </div>
+            <button id="edit-profile-button-2" type="button">Edit</button>
+          </div>
+
+          <dl>
+            <div><dt>Name</dt><dd id="profile-name"></dd></div>
+            <div><dt>Mobile</dt><dd id="profile-phone"></dd></div>
+            <div><dt>Email</dt><dd id="profile-email"></dd></div>
+            <div><dt>Adults</dt><dd id="profile-adults"></dd></div>
+            <div><dt>Children</dt><dd id="profile-children"></dd></div>
+          </dl>
+        </article>
+
+        <article class="panel address-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Delivery Address</p>
+              <h2 id="address-label">Home</h2>
+            </div>
+            <button id="edit-address-button" type="button">Edit</button>
+          </div>
+
+          <address id="address-display"></address>
+          <p id="address-instructions"></p>
+        </article>
+      </section>
+
+      <section class="panel orders-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Harvest History</p>
+            <h2>Your orders</h2>
+          </div>
+        </div>
+
+        <div id="orders-list" class="orders-list"></div>
+
+        <div id="orders-empty" class="orders-empty" hidden>
+          <span>🧺</span>
+          <p>No harvest orders yet.</p>
+          <a href="/products/">Explore Harvest</a>
+        </div>
+      </section>
+
+      <section class="support-card">
+        <div>
+          <p class="eyebrow">Need Help?</p>
+          <h2>Our Singapore Harvest Team is here.</h2>
+          <p>Reach us for questions about your order, delivery or payment.</p>
+        </div>
+
+        <div class="support-actions">
+          <a id="support-whatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a>
+          <a id="support-call" href="#">Call</a>
+          <a id="support-email" href="mailto:health@myfarmbox.in">Email</a>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="profile-dialog" class="edit-dialog">
+    <form method="dialog">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">Profile</p>
+          <h2>Edit information</h2>
+        </div>
+        <button value="cancel" aria-label="Close">×</button>
+      </div>
+
+      <div class="form-grid">
+        <label><span>Name</span><input id="edit-name" required></label>
+        <label><span>Mobile</span><input id="edit-phone" type="tel" required></label>
+        <label class="full"><span>Email</span><input id="edit-email" type="email" required></label>
+        <label><span>Adults</span><input id="edit-adults" type="number" min="0"></label>
+        <label><span>Children</span><input id="edit-children" type="number" min="0"></label>
+      </div>
+
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="cancel-profile">Cancel</button>
+        <button type="button" id="save-profile" class="primary">Save Profile</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="address-dialog" class="edit-dialog">
+    <form method="dialog">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">Delivery Address</p>
+          <h2>Edit address</h2>
+        </div>
+        <button value="cancel" aria-label="Close">×</button>
+      </div>
+
+      <div class="form-grid">
+        <label class="full"><span>Address</span><textarea id="edit-address-line" rows="3" required></textarea></label>
+        <label><span>Unit number</span><input id="edit-unit-number"></label>
+        <label><span>Building / condo</span><input id="edit-building"></label>
+        <label><span>Postal code</span><input id="edit-postal-code" maxlength="6" required></label>
+        <label><span>Label</span><input id="edit-place-name" placeholder="Home"></label>
+        <label class="full"><span>Delivery instructions</span><input id="edit-delivery-instructions"></label>
+      </div>
+
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="cancel-address">Cancel</button>
+        <button type="button" id="save-address" class="primary">Save Address</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="order-dialog" class="order-dialog">
+    <div class="dialog-heading">
+      <div>
+        <p class="eyebrow">Harvest Order</p>
+        <h2 id="order-dialog-id"></h2>
+      </div>
+      <button id="close-order-dialog" type="button" aria-label="Close">×</button>
+    </div>
+
+    <div class="order-dialog-meta">
+      <div><small>Delivery</small><strong id="order-dialog-delivery"></strong></div>
+      <div><small>Status</small><strong id="order-dialog-status"></strong></div>
+      <div><small>Payment</small><strong id="order-dialog-payment"></strong></div>
+    </div>
+
+    <div id="order-dialog-items" class="order-dialog-items"></div>
+
+    <div class="order-dialog-total">
+      <span>Total</span>
+      <strong id="order-dialog-total"></strong>
+    </div>
+
+    <button id="reorder-button" class="reorder-button" type="button">Add These Items Again</button>
+  </dialog>
+
+  <aside id="toast" class="toast" hidden>
+    <span>✓</span>
+    <div>
+      <strong id="toast-title"></strong>
+      <small id="toast-copy"></small>
+    </div>
+  </aside>
+
+  <script src="/shared.js?v=10"></script>
+  <script src="account.js?v=10"></script>
+</body>
+</html>
