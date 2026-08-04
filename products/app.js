@@ -6,6 +6,9 @@
 
   const CART_STORAGE_KEY = "mfb_sg_cart_v1";
   const DEFAULT_MINIMUM_ORDER_KG = 5;
+  const INITIAL_RENDER_COUNT = 18;
+  const RENDER_BATCH_SIZE = 15;
+  const IMAGE_TIMEOUT_MS = 4500;
 
   const state = {
     products: [],
@@ -13,8 +16,11 @@
     quantities: new Map(),
     activeCategory: "all",
     searchTerm: "",
+    minimumOrderKg: DEFAULT_MINIMUM_ORDER_KG,
+    renderedCount: 0,
+    renderToken: 0,
     toastTimer: null,
-    minimumOrderKg: DEFAULT_MINIMUM_ORDER_KG
+    observer: null
   };
 
   const elements = {
@@ -26,7 +32,6 @@
     search: document.getElementById("search-input"),
     filters: document.getElementById("category-filters"),
     cartCount: document.getElementById("cart-count"),
-    heroCartWeight: document.getElementById("hero-cart-weight"),
     retry: document.getElementById("retry-button"),
     clearFilters: document.getElementById("clear-filters-button"),
     toast: document.getElementById("cart-toast"),
@@ -38,15 +43,15 @@
     dockStatus: document.getElementById("dock-status"),
     dockWeight: document.getElementById("dock-weight"),
     dockProgressFill: document.getElementById("dock-progress-fill"),
-    checkoutButton: document.getElementById("checkout-button")
+    checkoutButton: document.getElementById("checkout-button"),
+    renderStatus: document.getElementById("render-status")
   };
 
   function readCart() {
     try {
       const value = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
       return Array.isArray(value) ? value : [];
-    } catch (error) {
-      console.warn("Unable to read cart:", error);
+    } catch {
       return [];
     }
   }
@@ -54,6 +59,10 @@
   function writeCart(cart) {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     updateCartSummary();
+
+    if (typeof window.updateSharedCartCount === "function") {
+      window.updateSharedCartCount();
+    }
   }
 
   function unitWeightKg(item) {
@@ -67,74 +76,55 @@
   }
 
   function calculateCartWeightKg(cart = readCart()) {
-    return cart.reduce((total, item) => {
-      return total + unitWeightKg(item) * Number(item.quantity || 0);
-    }, 0);
+    return cart.reduce(
+      (total, item) =>
+        total + unitWeightKg(item) * Number(item.quantity || 0),
+      0
+    );
   }
 
   function updateCartSummary() {
     const cart = readCart();
+
     const count = cart.reduce(
       (total, item) => total + Number(item.quantity || 0),
       0
     );
+
     const weightKg = calculateCartWeightKg(cart);
     const minimumKg = Number(state.minimumOrderKg || DEFAULT_MINIMUM_ORDER_KG);
     const remainingKg = Math.max(0, minimumKg - weightKg);
+    const qualified = weightKg >= minimumKg;
     const progress = minimumKg > 0
       ? Math.min(100, (weightKg / minimumKg) * 100)
       : 100;
-    const qualified = weightKg >= minimumKg;
 
-    if (elements.cartCount) {
-      elements.cartCount.textContent = String(count);
-    }
-
-    if (elements.heroCartWeight) {
-      elements.heroCartWeight.textContent = `${weightKg.toFixed(2)} kg selected`;
-    }
-
-    if (elements.minimumWeight) {
-      elements.minimumWeight.textContent =
-        `${weightKg.toFixed(2)} kg / ${minimumKg.toFixed(2)} kg`;
-    }
-
-    if (elements.minimumProgress) {
-      elements.minimumProgress.style.width = `${progress}%`;
-    }
-
-    if (elements.dockProgressFill) {
-      elements.dockProgressFill.style.width = `${progress}%`;
-    }
-
-    if (elements.dockWeight) {
-      elements.dockWeight.textContent =
-        `${weightKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg`;
-    }
+    elements.cartCount.textContent = String(count);
+    elements.minimumWeight.textContent =
+      `${weightKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg`;
+    elements.minimumProgress.style.width = `${progress}%`;
+    elements.dockProgressFill.style.width = `${progress}%`;
+    elements.dockWeight.textContent =
+      `${weightKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg`;
 
     if (qualified) {
-      elements.minimumStatus.textContent =
-        "Your harvest has reached the minimum order quantity.";
-      elements.dockStatus.textContent =
-        "Harvest ready for checkout ✓";
+      elements.minimumStatus.textContent = "Your harvest is ready.";
+      elements.dockStatus.textContent = "Ready for checkout ✓";
       elements.checkoutButton.classList.remove("disabled");
       elements.checkoutButton.setAttribute("aria-disabled", "false");
     } else {
       elements.minimumStatus.textContent =
-        `Add another ${remainingKg.toFixed(2)} kg to complete your harvest.`;
+        `Add another ${remainingKg.toFixed(2)} kg.`;
       elements.dockStatus.textContent =
         `Add ${remainingKg.toFixed(2)} kg more`;
       elements.checkoutButton.classList.add("disabled");
       elements.checkoutButton.setAttribute("aria-disabled", "true");
     }
-
-    document.querySelectorAll("[data-shared-cart-count]").forEach(node => {
-      node.textContent = String(count);
-    });
   }
 
   function normalizeImageUrl(url) {
     const value = String(url || "").trim();
+
     if (!value) return "";
 
     if (
@@ -178,8 +168,8 @@
     const unit = String(product.unitType || "").trim();
 
     if (unit === "g" && total >= 1000) {
-      const kilograms = total / 1000;
-      return `${Number.isInteger(kilograms) ? kilograms : kilograms.toFixed(2)} kg`;
+      const kg = total / 1000;
+      return `${Number.isInteger(kg) ? kg : kg.toFixed(2)} kg`;
     }
 
     if (unit === "ml" && total >= 1000) {
@@ -209,44 +199,74 @@
     );
     const increment = Math.max(1, Number(product.incrementBy || 1));
 
-    let value = Number(nextValue || min);
-    value = Math.max(min, Math.min(max, value));
-
+    let value = Math.max(min, Math.min(max, Number(nextValue || min)));
     const steps = Math.round((value - min) / increment);
-    value = min + steps * increment;
-    value = Math.max(min, Math.min(max, value));
+    value = Math.max(min, Math.min(max, min + steps * increment));
 
     state.quantities.set(product.handleId, value);
     updateProductQuantityUI(product);
   }
 
   function updateProductQuantityUI(product) {
-    const quantity = getQuantity(product);
     const card = document.querySelector(
       `[data-product-id="${CSS.escape(product.handleId)}"]`
     );
 
     if (!card) return;
 
-    const valueNode = card.querySelector("[data-quantity-value]");
-    const minusButton = card.querySelector("[data-quantity-minus]");
-    const plusButton = card.querySelector("[data-quantity-plus]");
-    const totalNode = card.querySelector("[data-product-total]");
-
+    const quantity = getQuantity(product);
     const min = Math.max(1, Number(product.minQuantity || 1));
     const max = Math.min(
       Number(product.maxQuantity || product.stockUnits || 99),
       Number(product.stockUnits || 99)
     );
 
-    if (valueNode) valueNode.textContent = String(quantity);
-    if (minusButton) minusButton.disabled = quantity <= min;
-    if (plusButton) plusButton.disabled = quantity >= max;
+    card.querySelector("[data-quantity-value]").textContent = String(quantity);
+    card.querySelector("[data-quantity-minus]").disabled = quantity <= min;
+    card.querySelector("[data-quantity-plus]").disabled = quantity >= max;
+    card.querySelector("[data-product-total]").textContent =
+      `${totalPhysicalQuantity(product, quantity)} · ` +
+      `${currency(Number(product.price || 0) * quantity)}`;
+  }
 
-    if (totalNode) {
-      totalNode.textContent =
-        `${totalPhysicalQuantity(product, quantity)} · ` +
-        `${currency(Number(product.price || 0) * quantity)}`;
+  function initialiseImage(card, imageUrl) {
+    const image = card.querySelector(".product-image");
+    const loading = card.querySelector(".image-loading");
+    const placeholder = card.querySelector(".product-placeholder");
+
+    if (!image || !imageUrl) {
+      if (loading) loading.hidden = true;
+      if (placeholder) placeholder.hidden = false;
+      return;
+    }
+
+    let settled = false;
+
+    function showImage() {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      loading.hidden = true;
+      placeholder.hidden = true;
+      image.classList.add("loaded");
+    }
+
+    function showFallback() {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      image.hidden = true;
+      loading.hidden = true;
+      placeholder.hidden = false;
+    }
+
+    const timer = window.setTimeout(showFallback, IMAGE_TIMEOUT_MS);
+
+    image.addEventListener("load", showImage, { once: true });
+    image.addEventListener("error", showFallback, { once: true });
+
+    if (image.complete) {
+      image.naturalWidth > 0 ? showImage() : showFallback();
     }
   }
 
@@ -255,11 +275,11 @@
     const imageUrl = normalizeImageUrl(product.imageUrl);
     const quantity = getQuantity(product);
 
-    const article = document.createElement("article");
-    article.className = "product-card";
-    article.dataset.productId = product.handleId;
+    const card = document.createElement("article");
+    card.className = "product-card";
+    card.dataset.productId = product.handleId;
 
-    article.innerHTML = `
+    card.innerHTML = `
       <div class="product-image-wrap">
         ${
           imageUrl
@@ -273,10 +293,12 @@
             : ""
         }
 
+        <div class="image-loading"${imageUrl ? "" : " hidden"}></div>
+
         <div class="product-placeholder"${imageUrl ? " hidden" : ""}>
           <div>
             <span aria-hidden="true">🌿</span>
-            <strong>Fresh from MyFarmBox</strong>
+            <strong>MyFarmBox</strong>
           </div>
         </div>
 
@@ -287,66 +309,48 @@
 
       <div class="product-body">
         <h2 class="product-title">${escapeHtml(name.primary)}</h2>
-        ${
-          name.native
-            ? `<p class="product-tanglish">${escapeHtml(name.native)}</p>`
-            : ""
-        }
+        <p class="product-native">${escapeHtml(name.native)}</p>
 
-        <div class="product-meta">
-          <div>
-            <span class="product-unit">${escapeHtml(product.unitLabel)}</span>
-            <strong class="product-price">
-              ${currency(product.price)}
-              <small>/ unit</small>
-            </strong>
-          </div>
+        <span class="product-unit">${escapeHtml(product.unitLabel)}</span>
+        <strong class="product-price">${currency(product.price)}</strong>
 
-          <div class="quantity-control" aria-label="Choose quantity">
-            <button type="button" data-quantity-minus>−</button>
+        <div class="product-controls">
+          <div class="quantity-control">
+            <button type="button" data-quantity-minus aria-label="Reduce quantity">−</button>
             <span class="quantity-value" data-quantity-value>${quantity}</span>
-            <button type="button" data-quantity-plus>+</button>
+            <button type="button" data-quantity-plus aria-label="Increase quantity">+</button>
           </div>
+
+          <button class="add-button" type="button" data-add-to-cart>Add</button>
         </div>
 
         <p class="product-total" data-product-total></p>
-
-        <button class="add-button" type="button" data-add-to-cart>
-          Add to harvest
-        </button>
       </div>
     `;
 
-    const image = article.querySelector(".product-image");
-    const placeholder = article.querySelector(".product-placeholder");
+    initialiseImage(card, imageUrl);
 
-    if (image) {
-      image.addEventListener("error", () => {
-        image.hidden = true;
-        placeholder.hidden = false;
-      });
-    }
-
-    article.querySelector("[data-quantity-minus]").addEventListener("click", () => {
+    card.querySelector("[data-quantity-minus]").addEventListener("click", () => {
       setQuantity(
         product,
         getQuantity(product) - Number(product.incrementBy || 1)
       );
     });
 
-    article.querySelector("[data-quantity-plus]").addEventListener("click", () => {
+    card.querySelector("[data-quantity-plus]").addEventListener("click", () => {
       setQuantity(
         product,
         getQuantity(product) + Number(product.incrementBy || 1)
       );
     });
 
-    article.querySelector("[data-add-to-cart]").addEventListener("click", event => {
+    card.querySelector("[data-add-to-cart]").addEventListener("click", event => {
       addToCart(product, getQuantity(product), event.currentTarget);
     });
 
     requestAnimationFrame(() => updateProductQuantityUI(product));
-    return article;
+
+    return card;
   }
 
   function addToCart(product, quantity, button) {
@@ -358,7 +362,6 @@
         Number(product.maxQuantity || product.stockUnits || 99),
         Number(existing.quantity || 0) + Number(quantity || 1)
       );
-
       existing.unitPrice = Number(product.price);
       existing.unitLabel = product.unitLabel;
       existing.unitValue = Number(product.unitValue);
@@ -386,41 +389,39 @@
 
     writeCart(cart);
 
-    if (button) {
-      const original = button.textContent;
-      button.textContent = "Added ✓";
-      button.classList.add("added");
+    const original = button.textContent;
+    button.textContent = "✓";
 
-      window.setTimeout(() => {
-        button.textContent = original;
-        button.classList.remove("added");
-      }, 1200);
-    }
+    window.setTimeout(() => {
+      button.textContent = original;
+    }, 900);
 
     const displayName = productDisplayName(product).primary;
+
     showToast(
       "Added to your harvest",
-      `${quantity} × ${displayName} · ${currency(product.price * quantity)}`
+      `${quantity} × ${displayName}`
     );
   }
 
   function showToast(title, copy) {
-    if (!elements.toast) return;
-
     elements.toastTitle.textContent = title;
     elements.toastCopy.textContent = copy;
     elements.toast.hidden = false;
 
-    window.clearTimeout(state.toastTimer);
+    clearTimeout(state.toastTimer);
+
     state.toastTimer = window.setTimeout(() => {
       elements.toast.hidden = true;
-    }, 3500);
+    }, 2500);
   }
 
   function renderFilters(categories) {
-    const allButton = elements.filters.querySelector('[data-category="all"]');
-    elements.filters.innerHTML = "";
-    elements.filters.appendChild(allButton);
+    elements.filters.innerHTML = `
+      <button class="filter-chip active" type="button" data-category="all">
+        All
+      </button>
+    `;
 
     categories.forEach(category => {
       const button = document.createElement("button");
@@ -430,55 +431,81 @@
       button.textContent = category;
       elements.filters.appendChild(button);
     });
-
-    elements.filters.addEventListener("click", event => {
-      const button = event.target.closest("[data-category]");
-      if (!button) return;
-
-      state.activeCategory = button.dataset.category;
-
-      elements.filters.querySelectorAll(".filter-chip").forEach(chip => {
-        chip.classList.toggle("active", chip === button);
-      });
-
-      applyFilters();
-    });
   }
 
   function applyFilters() {
     const term = state.searchTerm.trim().toLowerCase();
 
     state.filteredProducts = state.products.filter(product => {
-      const matchesCategory =
+      const categoryMatch =
         state.activeCategory === "all" ||
         product.collection === state.activeCategory;
 
-      const haystack = [
+      const searchable = [
         product.name,
         product.tanglish,
         product.collection,
         product.unitLabel
       ].join(" ").toLowerCase();
 
-      return matchesCategory && (!term || haystack.includes(term));
+      return categoryMatch && (!term || searchable.includes(term));
     });
 
     renderProducts();
   }
 
   function renderProducts() {
+    state.renderToken += 1;
+    const token = state.renderToken;
+
+    state.renderedCount = 0;
     elements.grid.innerHTML = "";
+    elements.renderStatus.hidden = true;
 
-    const count = state.filteredProducts.length;
+    const total = state.filteredProducts.length;
+
     elements.summary.textContent =
-      count === 1 ? "1 product available" : `${count} products available`;
+      total === 1 ? "1 product" : `${total} products`;
 
-    elements.empty.hidden = count > 0;
-    elements.grid.hidden = count === 0;
+    elements.empty.hidden = total > 0;
+    elements.grid.hidden = total === 0;
 
-    state.filteredProducts.forEach(product => {
-      elements.grid.appendChild(createProductCard(product));
-    });
+    if (!total) return;
+
+    renderNextBatch(token, INITIAL_RENDER_COUNT);
+  }
+
+  function renderNextBatch(token, batchSize = RENDER_BATCH_SIZE) {
+    if (token !== state.renderToken) return;
+
+    const start = state.renderedCount;
+    const end = Math.min(
+      start + batchSize,
+      state.filteredProducts.length
+    );
+
+    const fragment = document.createDocumentFragment();
+
+    for (let index = start; index < end; index += 1) {
+      fragment.appendChild(
+        createProductCard(state.filteredProducts[index])
+      );
+    }
+
+    elements.grid.appendChild(fragment);
+    state.renderedCount = end;
+
+    if (state.renderedCount < state.filteredProducts.length) {
+      elements.renderStatus.hidden = false;
+
+      requestAnimationFrame(() => {
+        window.setTimeout(() => {
+          renderNextBatch(token);
+        }, 45);
+      });
+    } else {
+      elements.renderStatus.hidden = true;
+    }
   }
 
   async function loadProducts() {
@@ -488,10 +515,14 @@
     elements.grid.hidden = true;
     elements.summary.textContent = "Loading this week’s harvest…";
 
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+
     try {
       const response = await fetch(`${API_URL}?action=getProducts`, {
         method: "GET",
-        cache: "no-store"
+        cache: "no-store",
+        signal: controller.signal
       });
 
       if (!response.ok) {
@@ -505,7 +536,6 @@
       }
 
       state.products = data.products;
-      state.filteredProducts = data.products;
       state.minimumOrderKg = Number(
         data.settings?.minimumOrderKg || DEFAULT_MINIMUM_ORDER_KG
       );
@@ -520,6 +550,7 @@
 
       elements.loading.hidden = true;
       elements.grid.hidden = false;
+
       applyFilters();
       updateCartSummary();
     } catch (error) {
@@ -528,7 +559,8 @@
       elements.grid.hidden = true;
       elements.error.hidden = false;
       elements.summary.textContent = "Harvest unavailable";
-      updateCartSummary();
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
@@ -558,12 +590,24 @@
     applyFilters();
   });
 
+  elements.filters.addEventListener("click", event => {
+    const button = event.target.closest("[data-category]");
+    if (!button) return;
+
+    state.activeCategory = button.dataset.category;
+
+    elements.filters.querySelectorAll(".filter-chip").forEach(chip => {
+      chip.classList.toggle("active", chip === button);
+    });
+
+    applyFilters();
+  });
+
   elements.retry.addEventListener("click", loadProducts);
   elements.clearFilters.addEventListener("click", clearFilters);
 
   elements.checkoutButton.addEventListener("click", event => {
-    const weightKg = calculateCartWeightKg();
-    if (weightKg < state.minimumOrderKg) {
+    if (calculateCartWeightKg() < state.minimumOrderKg) {
       event.preventDefault();
     }
   });
