@@ -1,32 +1,27 @@
-# MyFarmBox Singapore — 24 August Countdown
+# MyFarmBox.sg Countdown Homepage
 
-## Replace these files in the existing `singapore` repository
+Countdown target:
 
-Upload/replace:
+**24 August 2026 at 12:00 a.m. Singapore time (UTC+8)**
+
+## Upload to the existing `singapore` repository
+
+Replace these root files:
 
 - `index.html`
 - `styles.css`
 - `app.js`
+
+Upload this folder as well:
+
 - `assets/myfarmbox-logo.webp`
 
-Keep your existing `dashboard` folder and any other assets you still need.
+Keep your existing `dashboard` folder and any other operational files.
 
-## Countdown time
+## Important
 
-The countdown is set to:
+The page loads `app.js`, matching the existing repository structure shown in GitHub.
 
-`24 August 2026, 12:00 a.m. Singapore time (UTC+8)`
+The main CTA currently links to:
 
-This is configured in `app.js`:
-
-```js
-const launchDate = new Date("2026-08-24T00:00:00+08:00").getTime();
-```
-
-## Existing registration link
-
-The main buttons currently open:
-
-`https://myfarmbox.github.io/singapore/`
-
-If the registration form moves to another path, replace that link in `index.html`.
+https://myfarmbox.github.io/singapore/

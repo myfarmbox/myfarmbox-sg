@@ -2,126 +2,116 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#438d35">
   <meta name="description" content="MyFarmBox Singapore — 100% Natural Produce, planned around your family. Launching 24 August 2026.">
-  <title>MyFarmBox Singapore — Launching 24 August 2026</title>
+  <title>MyFarmBox Singapore — Launching 24 August</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-  <div class="grain" aria-hidden="true"></div>
-
-  <header class="site-header">
-    <a class="brand" href="#" aria-label="MyFarmBox Singapore">
+  <header class="topbar">
+    <a class="logo-wrap" href="/" aria-label="MyFarmBox Singapore">
       <img src="assets/myfarmbox-logo.webp" alt="MyFarmBox">
-      <div>
-        <strong>Singapore</strong>
-        <span>Founding Harvest</span>
-      </div>
     </a>
 
-    <nav aria-label="Main navigation">
-      <a href="#about">About</a>
-      <a href="#launch">Launch</a>
-      <a class="nav-cta" href="https://myfarmbox.github.io/singapore/">Join</a>
-    </nav>
+    <div class="launch-chip">
+      <span></span>
+      Singapore · Launching soon
+    </div>
   </header>
 
   <main>
-    <section class="hero" id="launch">
+    <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">Singapore Founding Harvest</p>
+        <p class="kicker">Singapore Founding Harvest</p>
 
         <h1>
           Fresh produce,<br>
           <em>planned around your family.</em>
         </h1>
 
-        <p class="hero-text">
-          MyFarmBox is arriving in Singapore with thoughtfully sourced
+        <p class="lead">
+          MyFarmBox is coming to Singapore with thoughtfully sourced
           <strong>100% Natural Produce</strong>, harvested close to delivery
-          and selected around what your household truly needs.
+          and selected around what your household actually needs.
         </p>
 
         <div class="launch-date">
           <span>Launching</span>
           <strong>24 August 2026</strong>
+          <small>12:00 a.m. · Singapore time</small>
         </div>
 
-        <div class="countdown" id="countdown" aria-label="Countdown to launch">
-          <div class="time-card">
+        <section class="countdown" aria-label="Countdown to MyFarmBox Singapore launch">
+          <div class="count-card">
             <strong id="days">00</strong>
             <span>Days</span>
           </div>
-          <div class="time-card">
+          <div class="count-card">
             <strong id="hours">00</strong>
             <span>Hours</span>
           </div>
-          <div class="time-card">
+          <div class="count-card">
             <strong id="minutes">00</strong>
             <span>Minutes</span>
           </div>
-          <div class="time-card">
+          <div class="count-card">
             <strong id="seconds">00</strong>
             <span>Seconds</span>
           </div>
-        </div>
+        </section>
 
-        <div class="live-message" id="liveMessage" hidden>
-          <span>●</span>
+        <div id="launch-message" class="launch-message" hidden>
+          <span>🌿</span>
           <div>
-            <small>We are now live</small>
-            <strong>Welcome to MyFarmBox Singapore</strong>
+            <small>MyFarmBox Singapore</small>
+            <strong>We are now live.</strong>
           </div>
         </div>
 
-        <div class="hero-actions">
-          <a class="primary-btn" id="mainCta" href="https://myfarmbox.github.io/singapore/">
+        <div class="actions">
+          <a id="primary-cta" class="primary" href="https://myfarmbox.github.io/singapore/">
             Join the Founding Harvest <span>→</span>
           </a>
-          <a class="text-link" href="#about">Discover MyFarmBox</a>
+          <a class="secondary" href="#story">Discover MyFarmBox</a>
         </div>
 
-        <div class="reassurance">
+        <div class="micro">
           <span>First 50 families</span>
           <span>No payment today</span>
           <span>No commitment</span>
         </div>
       </div>
 
-      <div class="hero-visual" aria-hidden="true">
-        <div class="date-seal">
-          <small>AUG</small>
-          <strong>24</strong>
-          <span>2026</span>
-        </div>
-
-        <div class="harvest-window">
-          <div class="sun"></div>
-          <div class="hill hill-back"></div>
-          <div class="hill hill-mid"></div>
-          <div class="hill hill-front"></div>
-
-          <div class="basket">
-            <span class="basket-rim"></span>
-            <span class="tomato tomato-one"></span>
-            <span class="tomato tomato-two"></span>
-            <span class="leaf leaf-one"></span>
-            <span class="leaf leaf-two"></span>
-            <span class="leaf leaf-three"></span>
-            <span class="okra okra-one"></span>
-            <span class="okra okra-two"></span>
+      <div class="hero-art" aria-hidden="true">
+        <div class="harvest-card">
+          <div class="card-top">
+            <span>FOUNDING EDITION</span>
+            <strong>01 / 50</strong>
           </div>
 
-          <p>Fresh. Traceable.<br>Thoughtfully delivered.</p>
+          <div class="produce">
+            <span class="tomato one"></span>
+            <span class="tomato two"></span>
+            <span class="leaf l1"></span>
+            <span class="leaf l2"></span>
+            <span class="leaf l3"></span>
+            <span class="okra o1"></span>
+            <span class="okra o2"></span>
+            <span class="basket"></span>
+          </div>
+
+          <div class="card-bottom">
+            <small>Fresh. Traceable. Thoughtfully delivered.</small>
+            <strong>Singapore</strong>
+          </div>
         </div>
 
-        <div class="family-note">
+        <div class="floating-note">
           <span>🌿</span>
           <div>
             <small>Built with families</small>
@@ -131,48 +121,30 @@
       </div>
     </section>
 
-    <section class="about" id="about">
+    <section class="promise" id="story">
       <div class="section-heading">
-        <p>Why MyFarmBox</p>
+        <p>WHY MYFARMBOX</p>
         <h2>A fresher way to bring everyday produce home.</h2>
       </div>
 
-      <div class="values-grid">
+      <div class="promise-grid">
         <article>
-          <span class="value-icon">🌱</span>
+          <span class="icon">🌱</span>
           <h3>100% Natural Produce</h3>
-          <p>Thoughtfully sourced vegetables, greens and fruits for everyday family meals.</p>
+          <p>Thoughtfully sourced produce for the meals your family already enjoys.</p>
         </article>
 
         <article>
-          <span class="value-icon">🧺</span>
+          <span class="icon">🧺</span>
           <h3>Harvested close to delivery</h3>
-          <p>We plan first and prepare your harvest closer to the day it reaches your home.</p>
+          <p>We plan first and prepare your harvest closer to the day it reaches you.</p>
         </article>
 
         <article>
-          <span class="value-icon">❤️</span>
+          <span class="icon">❤️</span>
           <h3>Planned around your family</h3>
-          <p>Choose what your household needs—nothing more and nothing less.</p>
+          <p>Choose what your household actually needs—nothing more and nothing less.</p>
         </article>
-      </div>
-    </section>
-
-    <section class="founding-section">
-      <div>
-        <p class="eyebrow light">50 Singapore families only</p>
-        <h2>We want to learn<br>before we grow.</h2>
-      </div>
-
-      <div class="founding-copy">
-        <p>
-          Our first Singapore harvest is intentionally small. It helps us
-          understand real household routines, refine delivery clusters and
-          build the experience with care.
-        </p>
-        <a href="https://myfarmbox.github.io/singapore/">
-          Build your Harvest Profile <span>→</span>
-        </a>
       </div>
     </section>
   </main>
@@ -180,10 +152,10 @@
   <footer>
     <div class="footer-brand">
       <img src="assets/myfarmbox-logo.webp" alt="">
-      <div>
-        <strong>MyFarmBox Singapore</strong>
+      <p>
+        MyFarmBox Singapore<br>
         <span>Fresh. Traceable. Thoughtfully delivered.</span>
-      </div>
+      </p>
     </div>
     <p>© <span id="year"></span> MyFarmBox</p>
   </footer>
