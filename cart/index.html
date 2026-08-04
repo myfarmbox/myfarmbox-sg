@@ -1,1 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#438d35">
+  <title>My Harvest — MyFarmBox Singapore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/shared.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=8">
+</head>
+<body>
+  <div id="site-header"></div>
 
+  <main class="shell">
+    <header class="page-head">
+      <div>
+        <p class="eyebrow">My Harvest</p>
+        <h1>Review your weekly harvest.</h1>
+        <p>Your selections are saved until you are ready.</p>
+      </div>
+      <a href="/products/">← Continue Harvest</a>
+    </header>
+
+    <section id="loading" class="notice">Checking current prices and availability…</section>
+
+    <section id="empty" class="empty" hidden>
+      <span>🌿</span>
+      <h2>Your harvest basket is empty.</h2>
+      <p>Let’s fill it with something fresh.</p>
+      <a href="/products/">Explore Harvest →</a>
+    </section>
+
+    <section id="layout" class="layout" hidden>
+      <div class="main">
+        <section class="quick-summary">
+          <div><small>Items</small><strong id="sumItems">0</strong></div>
+          <div><small>Weight</small><strong id="sumWeight">0.00 kg</strong></div>
+          <div><small>Delivery</small><strong id="sumDelivery">Sunday</strong></div>
+          <div><small>Total</small><strong id="sumTotal">S$0.00</strong></div>
+        </section>
+
+        <section class="delivery">
+          <span>🚚</span>
+          <div>
+            <small>Your delivery</small>
+            <h2 id="deliveryDate">Sunday delivery</h2>
+            <p>Delivered between 9:00 a.m. and 9:00 p.m. Singapore time.</p>
+            <b>Orders placed by Wednesday, 11:59 p.m. are delivered on the coming Sunday. Later orders move to the following Sunday.</b>
+          </div>
+        </section>
+
+        <section class="progress-card">
+          <div class="progress-copy">
+            <div><small>Minimum harvest</small><strong id="minimumStatus">Checking…</strong></div>
+            <span id="minimumWeight">0.00 / 5.00 kg</span>
+          </div>
+          <div class="track"><div id="progressBar"></div></div>
+          <a href="/products/">Add more products</a>
+        </section>
+
+        <section class="items-card">
+          <div class="section-head">
+            <div><small>Selected produce</small><h2>Your Harvest</h2></div>
+            <button id="clearBtn" type="button">Clear harvest</button>
+          </div>
+          <div id="items" class="items"></div>
+        </section>
+
+        <section class="notes">
+          <label for="notes"><b>Anything you’d like us to know?</b><small>Delivery instructions or substitutions.</small></label>
+          <textarea id="notes" maxlength="500" rows="4" placeholder="For example: call on arrival..."></textarea>
+          <span id="notesCount">0 / 500</span>
+        </section>
+
+        <section class="returns">
+          <div class="section-head">
+            <div><small>Optional</small><h2>Return with this Harvest</h2></div>
+            <span>♻️</span>
+          </div>
+          <div class="return-grid">
+            <label><input type="checkbox" value="Jute Bag"><span>Jute Bag</span></label>
+            <label><input type="checkbox" value="Ice Pack"><span>Ice Pack</span></label>
+            <label><input type="checkbox" value="Vegetable Containers"><span>Vegetable Containers</span></label>
+          </div>
+        </section>
+      </div>
+
+      <aside class="order-summary">
+        <div class="summary-card">
+          <p class="eyebrow">Order Summary</p>
+          <div><span>Products</span><strong id="subtotal">S$0.00</strong></div>
+          <div><span>Delivery</span><strong id="deliveryFee">FREE</strong></div>
+          <div><span>GST</span><strong>Included</strong></div>
+          <hr>
+          <div class="total"><span>Total</span><strong id="grandTotal">S$0.00</strong></div>
+          <p id="warning" class="warning">Add more produce to reach the 5 kg minimum.</p>
+          <a id="confirmBtn" class="confirm disabled" href="/checkout/" aria-disabled="true">Confirm Harvest →</a>
+          <small class="footnote">Prices and availability are rechecked before checkout.</small>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="clearDialog">
+    <span>🧺</span>
+    <h2>Clear your harvest?</h2>
+    <p>This removes all selected products.</p>
+    <div>
+      <button id="keepBtn" type="button">Keep Harvest</button>
+      <button id="clearAllBtn" class="danger" type="button">Clear Everything</button>
+    </div>
+  </dialog>
+
+  <script src="/shared.js?v=8"></script>
+  <script src="cart.js?v=8"></script>
+</body>
+</html>
