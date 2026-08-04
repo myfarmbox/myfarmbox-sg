@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#438d35">
+  <meta name="description" content="Confirm your MyFarmBox Singapore harvest and delivery details.">
+  <title>Confirm Harvest — MyFarmBox Singapore</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <link rel="stylesheet" href="/shared.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=9">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main class="page-shell">
+    <header class="page-heading">
+      <div>
+        <p class="eyebrow">Confirm Harvest</p>
+        <h1>One final step before we plan your delivery.</h1>
+        <p class="lead">Verify your profile, delivery address and payment preference.</p>
+      </div>
+
+      <a href="/cart/" class="back-link">← Back to My Harvest</a>
+    </header>
+
+    <section id="guard-state" class="message-card">
+      <span class="loader"></span>
+      <div>
+        <strong>Checking your harvest…</strong>
+        <small>Confirming minimum quantity, prices and availability.</small>
+      </div>
+    </section>
+
+    <section id="empty-state" class="empty-state" hidden>
+      <span aria-hidden="true">🌿</span>
+      <h2>Your harvest is not ready yet.</h2>
+      <p id="empty-message">Please return to your basket and complete the 5 kg minimum.</p>
+      <a href="/cart/">Review My Harvest →</a>
+    </section>
+
+    <section id="checkout-layout" class="checkout-layout" hidden>
+      <div class="checkout-main">
+        <section class="step-card active" data-step-card="1">
+          <header class="step-heading">
+            <span>01</span>
+            <div>
+              <small>Customer lookup</small>
+              <h2>Let’s find your Founding Harvest profile.</h2>
+              <p>Enter the same mobile number used for the Singapore waitlist.</p>
+            </div>
+          </header>
+
+          <div class="phone-row">
+            <label>
+              <span>Singapore mobile number</span>
+              <input
+                id="lookup-phone"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="+65 8123 4567"
+              >
+            </label>
+
+            <button id="lookup-button" type="button">
+              Find My Profile
+            </button>
+          </div>
+
+          <p id="lookup-message" class="form-message" aria-live="polite"></p>
+        </section>
+
+        <section class="step-card locked" data-step-card="2">
+          <header class="step-heading">
+            <span>02</span>
+            <div>
+              <small>Profile and address</small>
+              <h2>Is this delivery information correct?</h2>
+              <p>You can confirm the saved information or update it before continuing.</p>
+            </div>
+          </header>
+
+          <div id="found-profile" class="found-profile" hidden>
+            <div class="profile-mark" aria-hidden="true">✓</div>
+            <div>
+              <small>Profile found</small>
+              <strong id="found-name"></strong>
+              <span id="found-source"></span>
+            </div>
+          </div>
+
+          <form id="customer-form" novalidate>
+            <div class="form-grid">
+              <label>
+                <span>Full name</span>
+                <input id="customer-name" name="name" autocomplete="name" required>
+              </label>
+
+              <label>
+                <span>Mobile number</span>
+                <input id="customer-phone" name="phone" autocomplete="tel" inputmode="tel" required>
+              </label>
+
+              <label class="full">
+                <span>Email</span>
+                <input id="customer-email" name="email" type="email" autocomplete="email" required>
+              </label>
+
+              <label class="full">
+                <span>Address</span>
+                <textarea id="address-line" name="addressLine" rows="3" autocomplete="street-address" required></textarea>
+              </label>
+
+              <label>
+                <span>Unit number</span>
+                <input id="unit-number" name="unitNumber" placeholder="#05-21">
+              </label>
+
+              <label>
+                <span>Building / condo</span>
+                <input id="building" name="building">
+              </label>
+
+              <label>
+                <span>Postal code</span>
+                <input id="postal-code" name="postalCode" inputmode="numeric" maxlength="6" required>
+              </label>
+
+              <label>
+                <span>Location name</span>
+                <input id="place-name" name="placeName" placeholder="Home">
+              </label>
+
+              <label class="full">
+                <span>Delivery instructions</span>
+                <input id="delivery-instructions" name="deliveryInstructions" placeholder="Call on arrival, leave at door...">
+              </label>
+            </div>
+
+            <input id="lat-long" name="latLong" type="hidden">
+            <input id="source-waitlist-id" name="sourceWaitlistId" type="hidden">
+
+            <div class="confirmation-choice">
+              <label>
+                <input id="details-confirmed" type="checkbox">
+                <span>I have checked and confirmed these details.</span>
+              </label>
+            </div>
+          </form>
+        </section>
+
+        <section class="step-card locked" data-step-card="3">
+          <header class="step-heading">
+            <span>03</span>
+            <div>
+              <small>Delivery and payment</small>
+              <h2>Confirm how your harvest will reach you.</h2>
+              <p>Your order will be scheduled according to the Singapore harvest cycle.</p>
+            </div>
+          </header>
+
+          <div class="delivery-confirmation">
+            <span aria-hidden="true">🚚</span>
+            <div>
+              <small>Expected delivery</small>
+              <strong id="delivery-date">Sunday</strong>
+              <p>Between 9:00 a.m. and 9:00 p.m. Singapore time.</p>
+            </div>
+          </div>
+
+          <div class="payment-section">
+            <h3>Payment preference</h3>
+
+            <div class="payment-options">
+              <label>
+                <input type="radio" name="paymentMethod" value="PayNow" checked>
+                <span>
+                  <b>PayNow</b>
+                  <small>Payment instructions will be shown after the order is created.</small>
+                </span>
+              </label>
+
+              <label>
+                <input type="radio" name="paymentMethod" value="Pay on Confirmation">
+                <span>
+                  <b>Confirm with Singapore Team</b>
+                  <small>Our team will contact you to complete payment.</small>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <label class="terms-row">
+            <input id="terms-confirmed" type="checkbox">
+            <span>
+              I confirm the order details and understand that fresh produce availability may vary slightly with the harvest.
+            </span>
+          </label>
+        </section>
+      </div>
+
+      <aside class="order-summary">
+        <div class="summary-card">
+          <p class="eyebrow">Harvest Summary</p>
+
+          <div id="summary-items" class="summary-items"></div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row">
+            <span>Harvest weight</span>
+            <strong id="summary-weight">0.00 kg</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Products</span>
+            <strong id="summary-subtotal">S$0.00</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Delivery</span>
+            <strong id="summary-delivery-fee">FREE</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>GST</span>
+            <strong>Included</strong>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row total">
+            <span>Total</span>
+            <strong id="summary-total">S$0.00</strong>
+          </div>
+
+          <div id="checkout-warning" class="checkout-warning">
+            Find your profile to continue.
+          </div>
+
+          <button id="place-order-button" class="place-order-button" type="button" disabled>
+            Place Harvest Order
+          </button>
+
+          <p class="summary-note">
+            Your order is written to the MyFarmBox Singapore order system only after you confirm.
+          </p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="success-dialog" class="success-dialog">
+    <div class="success-mark">✓</div>
+    <p class="eyebrow">Harvest order received</p>
+    <h2>Thank you. Your harvest is now being planned.</h2>
+
+    <div class="order-number-card">
+      <small>Order number</small>
+      <strong id="success-order-id"></strong>
+    </div>
+
+    <p id="success-delivery"></p>
+
+    <div id="payment-instructions" class="payment-instructions">
+      <small>Payment status</small>
+      <strong>Pending</strong>
+      <p id="payment-copy">Our Singapore team will share the payment instructions.</p>
+    </div>
+
+    <div class="success-actions">
+      <a href="/">Return Home</a>
+      <button id="close-success-button" type="button">Done</button>
+    </div>
+  </dialog>
+
+  <aside id="toast" class="toast" role="status" aria-live="polite" hidden>
+    <span aria-hidden="true">✓</span>
+    <div>
+      <strong id="toast-title"></strong>
+      <small id="toast-copy"></small>
+    </div>
+  </aside>
+
+  <script src="/shared.js?v=9"></script>
+  <script src="checkout.js?v=9"></script>
+</body>
+</html>
