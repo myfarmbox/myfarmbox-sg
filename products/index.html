@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#438d35">
-  <meta name="description" content="Explore fresh 100% Natural Produce available from MyFarmBox Singapore.">
-  <title>Explore the Harvest — MyFarmBox Singapore</title>
+  <meta name="description" content="Explore fresh 100% Natural Produce from MyFarmBox Singapore.">
+  <title>Explore Harvest — MyFarmBox Singapore</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,44 +16,39 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
   <link rel="manifest" href="/site.webmanifest">
 
-  <link rel="stylesheet" href="/shared.css?v=4">
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="/shared.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
-
 <body>
   <div id="site-header"></div>
 
-  <main>
-    <section class="catalog-intro">
+  <main class="page-shell">
+    <section class="page-intro">
       <div>
         <p class="eyebrow">Singapore Harvest</p>
         <h1>Choose what your family needs.</h1>
-        <p class="intro-copy">
-          Prices, units and availability are updated directly by the MyFarmBox Singapore team.
-        </p>
       </div>
 
-      <a class="mini-cart" href="/cart/" aria-label="Open cart">
+      <a class="cart-shortcut" href="/cart/" aria-label="Open your harvest">
         <span aria-hidden="true">🧺</span>
-        <strong><span id="cart-count">0</span></strong>
+        <strong id="cart-count">0</strong>
       </a>
     </section>
 
-    <section class="minimum-card" aria-label="Minimum harvest progress">
-      <div class="minimum-row">
+    <section class="minimum-card" aria-label="Minimum order progress">
+      <div class="minimum-copy">
         <div>
           <small>Minimum harvest</small>
-          <strong id="minimum-status">Add products to begin your harvest.</strong>
+          <strong id="minimum-status">Add products to begin.</strong>
         </div>
         <span id="minimum-weight">0.00 / 5.00 kg</span>
       </div>
-
       <div class="progress-track" aria-hidden="true">
         <div id="minimum-progress" class="progress-fill"></div>
       </div>
     </section>
 
-    <section class="catalog-tools" aria-label="Product search and filters">
+    <section class="catalog-tools" aria-label="Search and filter products">
       <label class="search-box">
         <span aria-hidden="true">⌕</span>
         <input
@@ -65,9 +60,7 @@
       </label>
 
       <div id="category-filters" class="category-filters" role="group" aria-label="Categories">
-        <button class="filter-chip active" type="button" data-category="all">
-          All
-        </button>
+        <button class="filter-chip active" type="button" data-category="all">All</button>
       </div>
     </section>
 
@@ -99,16 +92,13 @@
     </section>
 
     <section id="product-grid" class="product-grid" aria-label="Available products"></section>
-
-    <div id="render-status" class="render-status" hidden>
-      Loading more products…
-    </div>
+    <div id="render-status" class="render-status" hidden>Loading more products…</div>
   </main>
 
   <aside id="cart-toast" class="cart-toast" role="status" aria-live="polite" hidden>
     <span class="cart-toast-icon" aria-hidden="true">✓</span>
     <div>
-      <strong id="cart-toast-title">Added to your harvest</strong>
+      <strong id="cart-toast-title">Updated your harvest</strong>
       <small id="cart-toast-copy"></small>
     </div>
     <a href="/cart/">View</a>
@@ -116,7 +106,7 @@
 
   <div class="harvest-dock" aria-live="polite">
     <div class="dock-copy">
-      <small>Harvest progress</small>
+      <small>My Harvest</small>
       <strong id="dock-status">Add 5.00 kg more</strong>
     </div>
 
@@ -127,12 +117,19 @@
       <span id="dock-weight">0.00 / 5.00 kg</span>
     </div>
 
+    <div class="dock-total">
+      <small>Total</small>
+      <strong id="dock-total">S$0.00</strong>
+    </div>
+
     <a id="checkout-button" class="checkout-button disabled" href="/cart/" aria-disabled="true">
-      Cart
+      Continue
     </a>
   </div>
 
-  <script src="/shared.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="/shared.js?v=7"></script>
+  <script src="config.js?v=7"></script>
+  <script src="cart-store.js?v=7"></script>
+  <script src="products.js?v=7"></script>
 </body>
 </html>
