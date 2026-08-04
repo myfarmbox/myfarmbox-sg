@@ -751,7 +751,8 @@ h1 {
   }
 
   .add-control {
-    font-size: 7px;
+    font-size:11px;
+    min-height:42px;
   }
 
   .quantity-control {
@@ -763,7 +764,7 @@ h1 {
   }
 
   .quantity-value {
-    font-size: 8px;
+    font-size: 13px;
   }
 
   .skeleton-card {
@@ -785,12 +786,12 @@ h1 {
   }
 
   .dock-total strong {
-    font-size: 10px;
+    font-size: 15px;
   }
 
   .checkout-button {
     padding: 9px 10px;
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .cart-toast {
