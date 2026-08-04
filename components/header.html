@@ -1,13 +1,54 @@
-<header class="site-header">
+<header class="site-header" id="site-header-bar">
   <a class="site-logo" href="/" aria-label="MyFarmBox Singapore home">
     <img src="/assets/myfarmbox-logo.webp" alt="MyFarmBox">
   </a>
 
-  <nav class="site-nav" aria-label="Main navigation">
+  <nav class="site-nav desktop-nav" aria-label="Main navigation">
     <a href="/">Home</a>
     <a href="/join/">Founding Harvest</a>
     <a href="/products/">Products</a>
+    <a href="/account/">Account</a>
   </nav>
 
-  <a class="header-cta" href="/join/">Join Now</a>
+  <div class="header-actions">
+    <a class="header-cart" href="/cart/" aria-label="Open your harvest cart">
+      <span aria-hidden="true">🧺</span>
+      <span class="header-cart-text">Cart</span>
+      <strong data-shared-cart-count>0</strong>
+    </a>
+
+    <a class="header-cta desktop-cta" href="/join/">
+      Join Now
+    </a>
+
+    <button
+      id="mobile-menu-button"
+      class="mobile-menu-button"
+      type="button"
+      aria-label="Open navigation menu"
+      aria-controls="mobile-navigation"
+      aria-expanded="false"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+
+  <nav
+    id="mobile-navigation"
+    class="mobile-navigation"
+    aria-label="Mobile navigation"
+    hidden
+  >
+    <a href="/">Home</a>
+    <a href="/join/">Founding Harvest</a>
+    <a href="/products/">Products</a>
+    <a href="/cart/">
+      Your Harvest
+      <strong data-shared-cart-count>0</strong>
+    </a>
+    <a href="/account/">Account</a>
+    <a class="mobile-join" href="/join/">Join Now</a>
+  </nav>
 </header>
