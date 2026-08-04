@@ -16,25 +16,16 @@
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin="">
 
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+  <link rel="manifest" href="/site.webmanifest">
+
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/shared.css">
 </head>
 <body>
-<header class="site-header">
-  <div class="shell nav">
-    <a class="brand" href="#top" aria-label="MyFarmBox Singapore home">
-      <img src="assets/logo.png" alt="MyFarmBox logo" class="logo">
-      <span class="brand-copy">
-        <b>MyFarmBox</b>
-        <small>Singapore</small>
-      </span>
-    </a>
-
-    <div class="header-contact">
-      <span>Singapore support</span>
-      <a id="headerPhone" href="#" target="_blank" rel="noopener">+65 XXXX XXXX</a>
-    </div>
-  </div>
-</header>
+<div id="site-header"></div>
 
 <main id="top">
 
@@ -713,6 +704,7 @@
   src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
   crossorigin=""></script>
+<script src="/shared.js"></script>
 <script src="app.js"></script>
 <script>
   window.addEventListener("DOMContentLoaded", function () {

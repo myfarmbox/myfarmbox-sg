@@ -54,8 +54,16 @@ function applyContactDetails() {
     if (element) element.href = waUrl;
   });
 
-  $("headerPhone").textContent = CONFIG.SINGAPORE_PHONE_DISPLAY;
-  $("contactPhone").textContent = CONFIG.SINGAPORE_PHONE_DISPLAY;
+  const headerPhone = $("headerPhone");
+  const contactPhone = $("contactPhone");
+
+  if (headerPhone) {
+    headerPhone.textContent = CONFIG.SINGAPORE_PHONE_DISPLAY;
+  }
+
+  if (contactPhone) {
+    contactPhone.textContent = CONFIG.SINGAPORE_PHONE_DISPLAY;
+  }
 }
 
 function bindJourney() {

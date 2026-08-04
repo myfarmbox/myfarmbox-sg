@@ -1995,3 +1995,29 @@ dialog strong{
   }
 }
 
+
+/* =========================================================
+   Shared site header compatibility for /join/
+   The header markup is loaded from /components/header.html.
+   ========================================================= */
+#site-header .site-header{
+  position:relative;
+  top:auto;
+  z-index:auto;
+  color:inherit;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+
+#site-header .site-logo img{
+  width:64px;
+  height:64px;
+  object-fit:cover;
+}
+
+@media(max-width:720px){
+  #site-header .site-logo img{
+    width:54px;
+    height:54px;
+  }
+}
