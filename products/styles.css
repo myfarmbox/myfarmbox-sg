@@ -155,15 +155,18 @@ h1 {
   transition: width .25s ease;
 }
 
-.catalog-tools {
-  position: sticky;
-  top: 92px;
-  z-index: 30;
-  margin: 0 calc(clamp(16px, 4vw, 64px) * -1);
-  padding: 10px clamp(16px, 4vw, 64px) 8px;
-  background: rgba(248,245,237,.96);
-  border-bottom: 1px solid rgba(24,51,35,.06);
-  backdrop-filter: blur(16px);
+.catalog-tools{
+    position: sticky;
+    top: 76px;          /* mobile header height */
+    z-index: 900;
+
+    margin:0;
+    padding:10px 10px 8px;
+
+    background:#F8F5ED;
+    border-bottom:1px solid rgba(0,0,0,.06);
+
+    backdrop-filter:none;
 }
 
 .search-box {
