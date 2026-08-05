@@ -1,6 +1,6 @@
 
 /*
-UI UPDATE (v5)
+UI UPDATE (v7 — shared cart engine)
 - Cards should display "In Harvest" state when quantity > 0 in cart.
 - Quantity shown as "🧺 X added".
 - Card receives class 'in-cart'.
@@ -52,13 +52,21 @@ This package is prepared for integrating those UI hooks.
     dockStatus: document.getElementById("dock-status"),
     dockWeight: document.getElementById("dock-weight"),
     dockProgressFill: document.getElementById("dock-progress-fill"),
+    dockTotal: document.getElementById("dock-total"),
     checkoutButton: document.getElementById("checkout-button"),
     renderStatus: document.getElementById("render-status")
   };
 
   function readCart() {
+    if (window.MFBCart) {
+      return window.MFBCart.read();
+    }
+
     try {
-      const value = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]");
+      const value = JSON.parse(
+        localStorage.getItem(CART_STORAGE_KEY) || "[]"
+      );
+
       return Array.isArray(value) ? value : [];
     } catch {
       return [];
@@ -66,20 +74,67 @@ This package is prepared for integrating those UI hooks.
   }
 
   function writeCart(cart) {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-    updateCartSummary();
+    if (window.MFBCart) {
+      window.MFBCart.write(cart);
+    } else {
+      localStorage.setItem(
+        CART_STORAGE_KEY,
+        JSON.stringify(cart)
+      );
 
-    if (typeof window.updateSharedCartCount === "function") {
-      window.updateSharedCartCount();
+      if (
+        typeof window.updateSharedCartCount === "function"
+      ) {
+        window.updateSharedCartCount();
+      }
     }
+
+    updateCartSummary();
   }
 
   function unitWeightKg(item) {
-    const value = Number(item.unitValue || 0);
-    const unit = String(item.unitType || "").trim().toLowerCase();
+    const directWeight = Number(
+      item.weightKg ||
+      item.unitWeightKg ||
+      0
+    );
 
-    if (unit === "kg") return value;
-    if (unit === "g") return value / 1000;
+    if (directWeight > 0) {
+      return directWeight;
+    }
+
+    let value = Number(item.unitValue || 0);
+    let unit = String(item.unitType || "")
+      .trim()
+      .toLowerCase();
+
+    if ((!value || !unit) && item.unitLabel) {
+      const match = String(item.unitLabel)
+        .trim()
+        .toLowerCase()
+        .match(/([0-9]*\.?[0-9]+)\s*(kg|g|kilogram|kilograms|gram|grams)\b/);
+
+      if (match) {
+        value = Number(match[1] || 0);
+        unit = match[2] || "";
+      }
+    }
+
+    if (
+      unit === "kg" ||
+      unit === "kilogram" ||
+      unit === "kilograms"
+    ) {
+      return value;
+    }
+
+    if (
+      unit === "g" ||
+      unit === "gram" ||
+      unit === "grams"
+    ) {
+      return value / 1000;
+    }
 
     return 0;
   }
@@ -87,47 +142,232 @@ This package is prepared for integrating those UI hooks.
   function calculateCartWeightKg(cart = readCart()) {
     return cart.reduce(
       (total, item) =>
-        total + unitWeightKg(item) * Number(item.quantity || 0),
+        total +
+        unitWeightKg(item) *
+        Number(item.quantity || 0),
       0
     );
+  }
+
+  function hasMinimumOrderExemptProduct(cart = readCart()) {
+    return cart.some(
+      item =>
+        item.minimumOrderExempt === true &&
+        Number(item.quantity || 0) > 0
+    );
+  }
+
+  function getCartEligibility(cart = readCart()) {
+    if (window.MFBCart) {
+      return window.MFBCart.summarize(
+        cart,
+        {
+          minimumKg:
+            Number(
+              state.minimumOrderKg ||
+              DEFAULT_MINIMUM_ORDER_KG
+            )
+        }
+      );
+    }
+
+    const weightKg = calculateCartWeightKg(cart);
+    const minimumKg = Number(
+      state.minimumOrderKg ||
+      DEFAULT_MINIMUM_ORDER_KG
+    );
+    const exempt =
+      hasMinimumOrderExemptProduct(cart);
+
+    return {
+      weightKg,
+      minimumKg,
+      exempt,
+      hasExemptProduct: exempt,
+      qualified:
+        weightKg >= minimumKg ||
+        exempt,
+      subtotal: cart.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.unitPrice ||
+            item.price ||
+            0
+          ) *
+          Number(item.quantity || 0),
+        0
+      )
+    };
+  }
+
+  function hydrateCartFromProducts() {
+    const cart = readCart();
+
+    if (!cart.length || !state.products.length) {
+      return;
+    }
+
+    if (window.MFBCart) {
+      window.MFBCart.hydrateFromProducts(
+        cart,
+        state.products
+      );
+      return;
+    }
+
+    let changed = false;
+
+    cart.forEach(item => {
+      const product = state.products.find(
+        entry => entry.handleId === item.productId
+      );
+
+      if (!product) return;
+
+      const updates = {
+        productName: product.name,
+        tanglish: product.tanglish,
+        collection: product.collection,
+        imageUrl: normalizeImageUrl(product.imageUrl),
+        unitLabel: product.unitLabel,
+        unitValue: Number(product.unitValue || 0),
+        unitType: product.unitType,
+        unitPrice: Number(product.price || 0),
+        minimumOrderExempt:
+          Boolean(product.minimumOrderExempt),
+        minQuantity:
+          Number(product.minQuantity || 1),
+        maxQuantity:
+          Number(
+            product.maxQuantity ||
+            product.stockUnits ||
+            99
+          ),
+        incrementBy:
+          Number(product.incrementBy || 1)
+      };
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (item[key] !== value) {
+          item[key] = value;
+          changed = true;
+        }
+      });
+    });
+
+    if (changed) {
+      localStorage.setItem(
+        CART_STORAGE_KEY,
+        JSON.stringify(cart)
+      );
+    }
   }
 
   function updateCartSummary() {
     const cart = readCart();
 
     const count = cart.reduce(
-      (total, item) => total + Number(item.quantity || 0),
+      (total, item) =>
+        total + Number(item.quantity || 0),
       0
     );
 
-    const weightKg = calculateCartWeightKg(cart);
-    const minimumKg = Number(state.minimumOrderKg || DEFAULT_MINIMUM_ORDER_KG);
-    const remainingKg = Math.max(0, minimumKg - weightKg);
-    const qualified = weightKg >= minimumKg;
-    const progress = minimumKg > 0
-      ? Math.min(100, (weightKg / minimumKg) * 100)
-      : 100;
+    const eligibility = getCartEligibility(cart);
+    const {
+      weightKg,
+      minimumKg,
+      qualified
+    } = eligibility;
+
+    const exempt =
+      eligibility.hasExemptProduct ??
+      eligibility.exempt ??
+      false;
+
+    const subtotal =
+      Number(eligibility.subtotal || 0);
+
+    const remainingKg =
+      Math.max(0, minimumKg - weightKg);
+
+    const progress = exempt
+      ? 100
+      : minimumKg > 0
+        ? Math.min(
+            100,
+            (weightKg / minimumKg) * 100
+          )
+        : 100;
 
     elements.cartCount.textContent = String(count);
+
     elements.minimumWeight.textContent =
       `${weightKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg`;
-    elements.minimumProgress.style.width = `${progress}%`;
-    elements.dockProgressFill.style.width = `${progress}%`;
+
+    elements.minimumProgress.style.width =
+      `${progress}%`;
+
+    elements.dockProgressFill.style.width =
+      `${progress}%`;
+
     elements.dockWeight.textContent =
       `${weightKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg`;
 
+    if (elements.dockTotal) {
+      elements.dockTotal.textContent =
+        currency(subtotal);
+    }
+
+    if (exempt) {
+      elements.minimumStatus.textContent =
+        "Your Combo Box qualifies as a complete harvest.";
+
+      elements.dockStatus.textContent =
+        "Complete harvest selected ✓";
+
+      elements.checkoutButton.classList.remove(
+        "disabled"
+      );
+
+      elements.checkoutButton.setAttribute(
+        "aria-disabled",
+        "false"
+      );
+
+      return;
+    }
+
     if (qualified) {
-      elements.minimumStatus.textContent = "Your harvest is ready.";
-      elements.dockStatus.textContent = "Ready for checkout ✓";
-      elements.checkoutButton.classList.remove("disabled");
-      elements.checkoutButton.setAttribute("aria-disabled", "false");
+      elements.minimumStatus.textContent =
+        "Your harvest is ready.";
+
+      elements.dockStatus.textContent =
+        "Ready for checkout ✓";
+
+      elements.checkoutButton.classList.remove(
+        "disabled"
+      );
+
+      elements.checkoutButton.setAttribute(
+        "aria-disabled",
+        "false"
+      );
     } else {
       elements.minimumStatus.textContent =
         `Add another ${remainingKg.toFixed(2)} kg.`;
+
       elements.dockStatus.textContent =
         `Add ${remainingKg.toFixed(2)} kg more`;
-      elements.checkoutButton.classList.add("disabled");
-      elements.checkoutButton.setAttribute("aria-disabled", "true");
+
+      elements.checkoutButton.classList.add(
+        "disabled"
+      );
+
+      elements.checkoutButton.setAttribute(
+        "aria-disabled",
+        "true"
+      );
     }
   }
 
@@ -378,6 +618,8 @@ This package is prepared for integrating those UI hooks.
       existing.imageUrl = normalizeImageUrl(product.imageUrl);
       existing.productName = product.name;
       existing.collection = product.collection;
+      existing.minimumOrderExempt =
+        Boolean(product.minimumOrderExempt);
     } else {
       cart.push({
         productId: product.handleId,
@@ -392,7 +634,9 @@ This package is prepared for integrating those UI hooks.
         quantity: Number(quantity),
         minQuantity: Number(product.minQuantity || 1),
         maxQuantity: Number(product.maxQuantity || product.stockUnits || 99),
-        incrementBy: Number(product.incrementBy || 1)
+        incrementBy: Number(product.incrementBy || 1),
+        minimumOrderExempt:
+          Boolean(product.minimumOrderExempt)
       });
     }
 
@@ -454,7 +698,8 @@ This package is prepared for integrating those UI hooks.
         product.name,
         product.tanglish,
         product.collection,
-        product.unitLabel
+        product.unitLabel,
+        product.description
       ].join(" ").toLowerCase();
 
       return categoryMatch && (!term || searchable.includes(term));
@@ -551,6 +796,8 @@ This package is prepared for integrating those UI hooks.
 
       state.products.forEach(product => getQuantity(product));
 
+      hydrateCartFromProducts();
+
       renderFilters(
         Array.isArray(data.categories)
           ? data.categories
@@ -615,11 +862,14 @@ This package is prepared for integrating those UI hooks.
   elements.retry.addEventListener("click", loadProducts);
   elements.clearFilters.addEventListener("click", clearFilters);
 
-  elements.checkoutButton.addEventListener("click", event => {
-    if (calculateCartWeightKg() < state.minimumOrderKg) {
-      event.preventDefault();
+  elements.checkoutButton.addEventListener(
+    "click",
+    event => {
+      if (!getCartEligibility().qualified) {
+        event.preventDefault();
+      }
     }
-  });
+  );
 
   updateCartSummary();
   loadProducts();
