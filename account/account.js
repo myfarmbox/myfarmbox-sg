@@ -14,6 +14,9 @@
   let addressMarker = null;
   let savedAddressMap = null;
   let savedAddressMarker = null;
+  let addressMapObserver = null;
+  let savedMapObserver = null;
+  let geocodeController = null;
   const DEFAULT_MAP_CENTER = [1.3521, 103.8198];
 
   const $ = id => document.getElementById(id);
@@ -67,6 +70,7 @@
     editLatLong: $("edit-lat-long"),
     addressMap: $("address-map"),
     useCurrentLocation: $("use-current-location"),
+    findWrittenAddress: $("find-written-address"),
     mapStatus: $("map-status"),
     mapCoordinates: $("map-coordinates"),
     savedLocationWrap: $("saved-location-wrap"),
@@ -414,14 +418,72 @@
     });
   }
 
-  function refreshMapSize(map, delays = [0, 80, 220, 500]) {
+  function observeMapContainer(element, map, observerName) {
+    if (!element || !map || typeof ResizeObserver === "undefined") {
+      return null;
+    }
+
+    const observer = new ResizeObserver(entries => {
+      const entry = entries[0];
+
+      if (
+        entry &&
+        entry.contentRect.width > 120 &&
+        entry.contentRect.height > 120
+      ) {
+        window.requestAnimationFrame(() => {
+          map.invalidateSize({ animate: false, pan: false });
+        });
+      }
+    });
+
+    observer.observe(element);
+    return observer;
+  }
+
+  function settleMap(map, point, zoom = 17) {
     if (!map) return;
 
-    delays.forEach(delay => {
-      window.setTimeout(() => {
-        map.invalidateSize({ animate: false });
-      }, delay);
-    });
+    const centre = Array.isArray(point) ? point : null;
+    let attempts = 0;
+
+    const settle = () => {
+      attempts += 1;
+
+      const container = map.getContainer();
+      const rect = container.getBoundingClientRect();
+
+      if (rect.width > 120 && rect.height > 120) {
+        map.invalidateSize({ animate: false, pan: false });
+
+        if (centre) {
+          map.setView(centre, zoom, { animate: false });
+        }
+
+        if (attempts < 8) {
+          window.setTimeout(settle, attempts * 90);
+        }
+      } else if (attempts < 20) {
+        window.requestAnimationFrame(settle);
+      }
+    };
+
+    settle();
+  }
+
+  function addOpenStreetMapTiles(map) {
+    return L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+        tileSize: 256,
+        updateWhenIdle: false,
+        keepBuffer: 4,
+        crossOrigin: true,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }
+    ).addTo(map);
   }
 
   function renderSavedAddressMap(latLong) {
@@ -440,36 +502,177 @@
     els.savedLocationCoordinates.textContent =
       formatLatLong(point[0], point[1]);
 
-    if (!savedAddressMap) {
-      savedAddressMap = L.map("saved-address-map", {
-        zoomControl: true,
-        attributionControl: true,
-        dragging: true,
-        scrollWheelZoom: false
-      }).setView(point, 17);
+    window.requestAnimationFrame(() => {
+      if (!savedAddressMap) {
+        savedAddressMap = L.map("saved-address-map", {
+          zoomControl: true,
+          attributionControl: true,
+          dragging: true,
+          scrollWheelZoom: false,
+          tap: true
+        });
 
-      L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          maxZoom: 19,
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }
-      ).addTo(savedAddressMap);
-    } else {
-      savedAddressMap.setView(point, 17);
+        addOpenStreetMapTiles(savedAddressMap);
+
+        savedMapObserver = observeMapContainer(
+          els.savedAddressMap,
+          savedAddressMap,
+          "saved"
+        );
+      }
+
+      if (!savedAddressMarker) {
+        savedAddressMarker = L.marker(point, {
+          icon: deliveryPinIcon(),
+          interactive: false
+        }).addTo(savedAddressMap);
+      } else {
+        savedAddressMarker.setLatLng(point);
+      }
+
+      settleMap(savedAddressMap, point, 17);
+    });
+  }
+
+  async function reverseGeocodeLocation(lat, lng) {
+    if (geocodeController) {
+      geocodeController.abort();
     }
 
-    if (!savedAddressMarker) {
-      savedAddressMarker = L.marker(point, {
-        icon: deliveryPinIcon(),
-        interactive: false
-      }).addTo(savedAddressMap);
-    } else {
-      savedAddressMarker.setLatLng(point);
+    geocodeController = new AbortController();
+
+    const url = new URL(
+      "https://nominatim.openstreetmap.org/reverse"
+    );
+
+    url.search = new URLSearchParams({
+      format: "jsonv2",
+      lat: String(lat),
+      lon: String(lng),
+      zoom: "18",
+      addressdetails: "1",
+      "accept-language": "en"
+    }).toString();
+
+    const response = await fetch(url, {
+      signal: geocodeController.signal,
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Address lookup failed.");
     }
 
-    refreshMapSize(savedAddressMap);
+    return response.json();
+  }
+
+  async function forwardGeocodeAddress(query) {
+    if (geocodeController) {
+      geocodeController.abort();
+    }
+
+    geocodeController = new AbortController();
+
+    const url = new URL(
+      "https://nominatim.openstreetmap.org/search"
+    );
+
+    url.search = new URLSearchParams({
+      format: "jsonv2",
+      q: query,
+      limit: "1",
+      countrycodes: "sg",
+      addressdetails: "1",
+      "accept-language": "en"
+    }).toString();
+
+    const response = await fetch(url, {
+      signal: geocodeController.signal,
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Address lookup failed.");
+    }
+
+    const data = await response.json();
+    return data[0] || null;
+  }
+
+  function addressFromGeocode(result) {
+    const details = result?.address || {};
+
+    const lineParts = [
+      details.house_number,
+      details.road ||
+        details.pedestrian ||
+        details.residential ||
+        details.neighbourhood,
+      details.suburb ||
+        details.quarter ||
+        details.city_district,
+      details.city || details.town || details.village,
+      details.state
+    ].filter(Boolean);
+
+    return {
+      addressLine:
+        result?.display_name ||
+        lineParts.join(", "),
+      postalCode:
+        details.postcode || "",
+      label:
+        details.suburb ||
+        details.neighbourhood ||
+        details.city_district ||
+        details.city ||
+        "Home"
+    };
+  }
+
+  async function updateAddressFromPin(lat, lng) {
+    try {
+      els.mapStatus.textContent =
+        "Finding the address for this pin…";
+      els.mapStatus.className = "";
+
+      const result = await reverseGeocodeLocation(lat, lng);
+      const address = addressFromGeocode(result);
+
+      if (address.addressLine) {
+        els.editAddressLine.value = address.addressLine;
+      }
+
+      if (address.postalCode) {
+        els.editPostalCode.value =
+          String(address.postalCode).replace(/\D/g, "").slice(0, 6);
+      }
+
+      if (
+        address.label &&
+        !els.editPlaceName.value.trim()
+      ) {
+        els.editPlaceName.value = address.label;
+      }
+
+      updateMapFields(
+        lat,
+        lng,
+        "Pin and address updated."
+      );
+    } catch (error) {
+      if (error.name === "AbortError") return;
+
+      updateMapFields(
+        lat,
+        lng,
+        "Pin saved. Please verify the written address."
+      );
+    }
   }
 
   function parseLatLong(value) {
@@ -537,6 +740,11 @@
           position.lng,
           "Delivery pin updated."
         );
+
+        updateAddressFromPin(
+          position.lat,
+          position.lng
+        );
       });
     } else {
       addressMarker.setLatLng(point);
@@ -548,62 +756,77 @@
 
   function initialiseAddressMap(savedLatLong) {
     if (typeof L === "undefined") {
-      setMapError("The map could not be loaded. You can still save the written address.");
+      setMapError(
+        "The map could not be loaded. You can still save the written address."
+      );
       return;
     }
 
     const saved = parseLatLong(savedLatLong);
     const initial = saved || DEFAULT_MAP_CENTER;
 
-    if (!addressMap) {
-      addressMap = L.map("address-map", {
-        zoomControl: true,
-        attributionControl: true
-      }).setView(initial, saved ? 17 : 11);
+    const createMapWhenVisible = () => {
+      const rect = els.addressMap.getBoundingClientRect();
 
-      L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          maxZoom: 19,
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }
-      ).addTo(addressMap);
+      if (rect.width < 120 || rect.height < 120) {
+        window.requestAnimationFrame(createMapWhenVisible);
+        return;
+      }
 
-      addressMap.on("click", event => {
-        createOrMoveMarker(
-          event.latlng.lat,
-          event.latlng.lng,
-          "Delivery pin moved to the selected point."
+      if (!addressMap) {
+        addressMap = L.map("address-map", {
+          zoomControl: true,
+          attributionControl: true,
+          tap: true,
+          dragging: true
+        });
+
+        addOpenStreetMapTiles(addressMap);
+
+        addressMapObserver = observeMapContainer(
+          els.addressMap,
+          addressMap,
+          "edit"
         );
-      });
-    }
 
-    refreshMapSize(addressMap);
+        addressMap.on("click", event => {
+          createOrMoveMarker(
+            event.latlng.lat,
+            event.latlng.lng,
+            "Delivery pin moved."
+          );
 
-    window.setTimeout(() => {
+          updateAddressFromPin(
+            event.latlng.lat,
+            event.latlng.lng
+          );
+        });
+      }
+
       if (saved) {
         createOrMoveMarker(
           saved[0],
           saved[1],
           "Saved delivery pin loaded."
         );
+        settleMap(addressMap, saved, 17);
       } else {
         if (addressMarker) {
           addressMap.removeLayer(addressMarker);
           addressMarker = null;
         }
 
-        addressMap.setView(DEFAULT_MAP_CENTER, 11);
         els.editLatLong.value = "";
         els.mapCoordinates.textContent = "";
         els.mapStatus.textContent =
-          "Tap the map or use your current location.";
+          "Tap the map, find the written address, or use your current location.";
         els.mapStatus.className = "";
-      }
 
-      refreshMapSize(addressMap);
-    }, 120);
+        settleMap(addressMap, initial, 11);
+      }
+    };
+
+    createMapWhenVisible();
   }
 
   function useCurrentLocation() {
@@ -623,6 +846,11 @@
           position.coords.latitude,
           position.coords.longitude,
           "Current location selected. Drag the pin if needed."
+        );
+
+        updateAddressFromPin(
+          position.coords.latitude,
+          position.coords.longitude
         );
 
         els.useCurrentLocation.disabled = false;
@@ -651,6 +879,63 @@
     );
   }
 
+  async function findWrittenAddress() {
+    const query = [
+      els.editAddressLine.value.trim(),
+      els.editPostalCode.value.trim(),
+      "Singapore"
+    ].filter(Boolean).join(", ");
+
+    if (!query || query === "Singapore") {
+      setMapError("Enter an address or postal code first.");
+      return;
+    }
+
+    els.findWrittenAddress.disabled = true;
+    els.findWrittenAddress.textContent = "Finding…";
+    els.mapStatus.textContent =
+      "Finding this address on the map…";
+    els.mapStatus.className = "";
+
+    try {
+      const result = await forwardGeocodeAddress(query);
+
+      if (!result) {
+        throw new Error("Address not found.");
+      }
+
+      const lat = Number(result.lat);
+      const lng = Number(result.lon);
+      const address = addressFromGeocode(result);
+
+      createOrMoveMarker(
+        lat,
+        lng,
+        "Address found. Drag the pin to the exact entrance."
+      );
+
+      if (address.addressLine) {
+        els.editAddressLine.value = address.addressLine;
+      }
+
+      if (address.postalCode) {
+        els.editPostalCode.value =
+          String(address.postalCode).replace(/\D/g, "").slice(0, 6);
+      }
+
+      settleMap(addressMap, [lat, lng], 17);
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setMapError(
+          "We could not find that address. Try the postal code or place the pin manually."
+        );
+      }
+    } finally {
+      els.findWrittenAddress.disabled = false;
+      els.findWrittenAddress.textContent = "Find This Address";
+    }
+  }
+
   function openAddressEditor() {
     const address = account.address || {};
 
@@ -672,8 +957,9 @@
     els.addressDialog.showModal();
 
     window.requestAnimationFrame(() => {
-      initialiseAddressMap(address.latLong || "");
-      refreshMapSize(addressMap);
+      window.requestAnimationFrame(() => {
+        initialiseAddressMap(address.latLong || "");
+      });
     });
   }
 
@@ -852,6 +1138,7 @@
   $("save-profile").onclick = saveProfile;
   $("save-address").onclick = saveAddress;
   els.useCurrentLocation.onclick = useCurrentLocation;
+  els.findWrittenAddress.onclick = findWrittenAddress;
 
   $("close-order-dialog").onclick = () =>
     els.orderDialog.close();

@@ -956,3 +956,65 @@
     height: 310px;
   }
 }
+
+
+/* Final Leaflet reliability fix */
+
+.map-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.map-actions button {
+  min-height: 40px;
+}
+
+.map-help {
+  margin: 9px 0 0;
+  color: var(--mfb-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+/*
+Leaflet's tile images must never inherit the site's responsive image sizing.
+Explicit tile dimensions prevent Safari from collapsing the tile layer.
+*/
+.leaflet-container .leaflet-tile {
+  width: 256px !important;
+  height: 256px !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.leaflet-container .leaflet-marker-icon,
+.leaflet-container .leaflet-marker-shadow {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.leaflet-container {
+  width: 100% !important;
+  min-width: 0;
+  isolation: isolate;
+}
+
+#address-map,
+#saved-address-map {
+  position: relative;
+  width: 100% !important;
+}
+
+@media (max-width: 620px) {
+  .map-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .map-actions button {
+    width: 100%;
+  }
+}
