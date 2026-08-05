@@ -1035,3 +1035,30 @@ Explicit tile dimensions prevent Safari from collapsing the tile layer.
     height: 210px;
   }
 }
+
+
+/* v28 independent edit-map controller */
+#address-map.leaflet-container {
+  width: 100% !important;
+  height: 360px !important;
+  display: block;
+  background: #e7eee2;
+}
+
+#address-map .leaflet-pane,
+#address-map .leaflet-control {
+  z-index: auto;
+}
+
+#address-map .leaflet-tile {
+  width: 256px !important;
+  height: 256px !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+@media (max-width: 620px) {
+  #address-map.leaflet-container {
+    height: 310px !important;
+  }
+}
