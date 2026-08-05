@@ -12,6 +12,8 @@
   let toastTimer = null;
   let addressMap = null;
   let addressMarker = null;
+  let savedAddressMap = null;
+  let savedAddressMarker = null;
   const DEFAULT_MAP_CENTER = [1.3521, 103.8198];
 
   const $ = id => document.getElementById(id);
@@ -67,6 +69,9 @@
     useCurrentLocation: $("use-current-location"),
     mapStatus: $("map-status"),
     mapCoordinates: $("map-coordinates"),
+    savedLocationWrap: $("saved-location-wrap"),
+    savedLocationCoordinates: $("saved-location-coordinates"),
+    savedAddressMap: $("saved-address-map"),
     orderDialogId: $("order-dialog-id"),
     orderDialogDelivery: $("order-dialog-delivery"),
     orderDialogStatus: $("order-dialog-status"),
@@ -244,6 +249,8 @@
         ? `Delivery instructions: ${address.deliveryInstructions}`
         : "";
 
+    renderSavedAddressMap(address.latLong || "");
+
     renderOrders(orders);
     renderUpcoming(orders);
     prepareSupportLinks();
@@ -397,6 +404,74 @@
   }
 
 
+  function deliveryPinIcon() {
+    return L.divIcon({
+      className: "mfb-map-pin-wrap",
+      html: '<div class="mfb-map-pin" aria-hidden="true"></div>',
+      iconSize: [34, 42],
+      iconAnchor: [17, 40],
+      popupAnchor: [0, -40]
+    });
+  }
+
+  function refreshMapSize(map, delays = [0, 80, 220, 500]) {
+    if (!map) return;
+
+    delays.forEach(delay => {
+      window.setTimeout(() => {
+        map.invalidateSize({ animate: false });
+      }, delay);
+    });
+  }
+
+  function renderSavedAddressMap(latLong) {
+    const point = parseLatLong(latLong);
+
+    if (
+      !point ||
+      typeof L === "undefined" ||
+      !els.savedAddressMap
+    ) {
+      els.savedLocationWrap.hidden = true;
+      return;
+    }
+
+    els.savedLocationWrap.hidden = false;
+    els.savedLocationCoordinates.textContent =
+      formatLatLong(point[0], point[1]);
+
+    if (!savedAddressMap) {
+      savedAddressMap = L.map("saved-address-map", {
+        zoomControl: true,
+        attributionControl: true,
+        dragging: true,
+        scrollWheelZoom: false
+      }).setView(point, 17);
+
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 19,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }
+      ).addTo(savedAddressMap);
+    } else {
+      savedAddressMap.setView(point, 17);
+    }
+
+    if (!savedAddressMarker) {
+      savedAddressMarker = L.marker(point, {
+        icon: deliveryPinIcon(),
+        interactive: false
+      }).addTo(savedAddressMap);
+    } else {
+      savedAddressMarker.setLatLng(point);
+    }
+
+    refreshMapSize(savedAddressMap);
+  }
+
   function parseLatLong(value) {
     const parts = String(value || "")
       .split(",")
@@ -450,7 +525,8 @@
     if (!addressMarker) {
       addressMarker = L.marker(point, {
         draggable: true,
-        autoPan: true
+        autoPan: true,
+        icon: deliveryPinIcon()
       }).addTo(addressMap);
 
       addressMarker.on("dragend", event => {
@@ -503,9 +579,9 @@
       });
     }
 
-    window.setTimeout(() => {
-      addressMap.invalidateSize();
+    refreshMapSize(addressMap);
 
+    window.setTimeout(() => {
       if (saved) {
         createOrMoveMarker(
           saved[0],
@@ -525,7 +601,9 @@
           "Tap the map or use your current location.";
         els.mapStatus.className = "";
       }
-    }, 180);
+
+      refreshMapSize(addressMap);
+    }, 120);
   }
 
   function useCurrentLocation() {
@@ -593,7 +671,10 @@
 
     els.addressDialog.showModal();
 
-    initialiseAddressMap(address.latLong || "");
+    window.requestAnimationFrame(() => {
+      initialiseAddressMap(address.latLong || "");
+      refreshMapSize(addressMap);
+    });
   }
 
   async function postAction(payload) {

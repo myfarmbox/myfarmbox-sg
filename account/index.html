@@ -12,8 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhPRvZ8QvMTs0p4qGJ4sA8lL0jM=" crossorigin="">
-  <link rel="stylesheet" href="/shared.css?v=20">
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="/shared.css?v=21">
+  <link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
   <div id="site-header"></div>
@@ -120,6 +120,21 @@
 
           <address id="address-display"></address>
           <p id="address-instructions"></p>
+
+          <div id="saved-location-wrap" class="saved-location-wrap" hidden>
+            <div class="saved-location-heading">
+              <div>
+                <strong>Saved delivery pin</strong>
+                <small>The location currently saved for your deliveries.</small>
+              </div>
+              <span id="saved-location-coordinates"></span>
+            </div>
+
+            <div
+              id="saved-address-map"
+              aria-label="Saved delivery location map"
+            ></div>
+          </div>
         </article>
       </section>
 
@@ -193,11 +208,6 @@
 
       <div class="form-grid">
         <label class="full"><span>Address</span><textarea id="edit-address-line" rows="3" required></textarea></label>
-        <label><span>Unit number</span><input id="edit-unit-number"></label>
-        <label><span>Building / condo</span><input id="edit-building"></label>
-        <label><span>Postal code</span><input id="edit-postal-code" maxlength="6" required></label>
-        <label><span>Label</span><input id="edit-place-name" placeholder="Home"></label>
-        <label class="full"><span>Delivery instructions</span><input id="edit-delivery-instructions"></label>
 
         <div class="full map-section">
           <div class="map-heading">
@@ -220,6 +230,12 @@
 
           <input id="edit-lat-long" type="hidden">
         </div>
+
+        <label><span>Unit number</span><input id="edit-unit-number"></label>
+        <label><span>Building / condo</span><input id="edit-building"></label>
+        <label><span>Postal code</span><input id="edit-postal-code" maxlength="6" required></label>
+        <label><span>Label</span><input id="edit-place-name" placeholder="Home"></label>
+        <label class="full"><span>Delivery instructions</span><input id="edit-delivery-instructions"></label>
       </div>
 
       <div class="dialog-actions">
@@ -262,8 +278,8 @@
     </div>
   </aside>
 
-  <script src="/shared.js?v=11"></script>
+  <script src="/shared.js?v=21"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="account.js?v=11"></script>
+  <script src="account.js?v=21"></script>
 </body>
 </html>

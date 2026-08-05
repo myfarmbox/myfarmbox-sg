@@ -852,3 +852,107 @@
     gap: 4px;
   }
 }
+
+
+/* Saved delivery location */
+
+.saved-location-wrap {
+  margin-top: 18px;
+  padding-top: 17px;
+  border-top: 1px solid var(--mfb-border);
+}
+
+.saved-location-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 11px;
+}
+
+.saved-location-heading strong,
+.saved-location-heading small {
+  display: block;
+}
+
+.saved-location-heading strong {
+  color: var(--mfb-deep);
+  font-size: 14px;
+}
+
+.saved-location-heading small {
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.saved-location-heading > span {
+  color: var(--mfb-green-dark);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+#saved-address-map {
+  width: 100%;
+  height: 230px;
+  overflow: hidden;
+  border: 1px solid var(--mfb-border);
+  border-radius: var(--mfb-radius-sm);
+  background: #e7eee2;
+}
+
+/* Prevent the global shared image rule from breaking Leaflet tiles and icons. */
+.leaflet-container img,
+.leaflet-container .leaflet-tile,
+.leaflet-container .leaflet-marker-icon,
+.leaflet-container .leaflet-marker-shadow {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.mfb-map-pin {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border: 4px solid var(--mfb-white);
+  border-radius: 50% 50% 50% 0;
+  background: var(--mfb-green);
+  box-shadow: 0 8px 18px rgba(24, 51, 35, 0.28);
+  transform: rotate(-45deg);
+}
+
+.mfb-map-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--mfb-white);
+  transform: translate(-50%, -50%);
+}
+
+.edit-dialog {
+  max-height: calc(100vh - 28px);
+  overflow-y: auto;
+}
+
+#address-map {
+  height: 360px;
+}
+
+@media (max-width: 620px) {
+  .saved-location-heading {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  #saved-address-map {
+    height: 210px;
+  }
+
+  #address-map {
+    height: 310px;
+  }
+}
