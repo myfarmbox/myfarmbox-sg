@@ -4,21 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#438d35">
-  <meta name="description" content="Explore fresh 100% Natural Produce from MyFarmBox Singapore.">
-  <title>Explore Harvest — MyFarmBox Singapore</title>
+  <meta
+    name="description"
+    content="Explore fresh 100% Natural Produce available from MyFarmBox Singapore."
+  >
+  <title>Explore the Harvest — MyFarmBox Singapore</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  >
 
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
   <link rel="manifest" href="/site.webmanifest">
 
-  <link rel="stylesheet" href="/shared.css?v=20">
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="/shared.css?v=23">
+  <link rel="stylesheet" href="styles.css?v=23">
 </head>
+
 <body>
   <div id="site-header"></div>
 
@@ -29,28 +36,33 @@
         <h1>Choose what your family needs.</h1>
       </div>
 
-      <a class="cart-shortcut" href="/cart/" aria-label="Open your harvest">
+      <a class="cart-shortcut" href="/cart/" aria-label="Open cart">
         <span aria-hidden="true">🧺</span>
         <strong id="cart-count">0</strong>
       </a>
     </section>
 
-    <section class="minimum-card" aria-label="Minimum order progress">
+    <section class="minimum-card" aria-label="Minimum harvest progress">
       <div class="minimum-copy">
         <div>
           <small>Minimum harvest</small>
-          <strong id="minimum-status">Add products to begin.</strong>
+          <strong id="minimum-status">
+            Add products to begin your harvest.
+          </strong>
         </div>
-        <span id="minimum-weight">0.00 / 5.00 kg</span>
+
+        <span id="minimum-weight">0.00 kg / 5.00 kg</span>
       </div>
+
       <div class="progress-track" aria-hidden="true">
         <div id="minimum-progress" class="progress-fill"></div>
       </div>
     </section>
 
-    <section class="catalog-tools" aria-label="Search and filter products">
+    <section class="catalog-tools" aria-label="Product search and filters">
       <label class="search-box">
         <span aria-hidden="true">⌕</span>
+
         <input
           id="search-input"
           type="search"
@@ -59,8 +71,19 @@
         >
       </label>
 
-      <div id="category-filters" class="category-filters" role="group" aria-label="Categories">
-        <button class="filter-chip active" type="button" data-category="all">All</button>
+      <div
+        id="category-filters"
+        class="category-filters"
+        role="group"
+        aria-label="Categories"
+      >
+        <button
+          class="filter-chip active"
+          type="button"
+          data-category="all"
+        >
+          All
+        </button>
       </div>
     </section>
 
@@ -68,7 +91,11 @@
       <p id="results-summary">Loading this week’s harvest…</p>
     </section>
 
-    <section id="loading-state" class="loading-grid" aria-label="Loading products">
+    <section
+      id="loading-state"
+      class="loading-grid"
+      aria-label="Loading products"
+    >
       <article class="skeleton-card"></article>
       <article class="skeleton-card"></article>
       <article class="skeleton-card"></article>
@@ -80,33 +107,49 @@
     <section id="error-state" class="message-card" hidden>
       <span aria-hidden="true">🌿</span>
       <h2>We couldn’t load the harvest.</h2>
-      <p>Please refresh the page and try again.</p>
+      <p>
+        Please refresh the page. If the issue continues, contact
+        MyFarmBox Singapore.
+      </p>
       <button id="retry-button" type="button">Try again</button>
     </section>
 
     <section id="empty-state" class="message-card" hidden>
       <span aria-hidden="true">🔎</span>
       <h2>No products found.</h2>
-      <p>Try another search or category.</p>
-      <button id="clear-filters-button" type="button">View all products</button>
+      <p>Try another search or choose a different category.</p>
+      <button id="clear-filters-button" type="button">
+        View all products
+      </button>
     </section>
 
-    <section id="product-grid" class="product-grid" aria-label="Available products"></section>
-    <div id="render-status" class="render-status" hidden>Loading more products…</div>
+    <section
+      id="product-grid"
+      class="product-grid"
+      aria-label="Available products"
+    ></section>
   </main>
 
-  <aside id="cart-toast" class="cart-toast" role="status" aria-live="polite" hidden>
+  <aside
+    id="cart-toast"
+    class="cart-toast"
+    role="status"
+    aria-live="polite"
+    hidden
+  >
     <span class="cart-toast-icon" aria-hidden="true">✓</span>
+
     <div>
-      <strong id="cart-toast-title">Updated your harvest</strong>
+      <strong id="cart-toast-title">Added to your harvest</strong>
       <small id="cart-toast-copy"></small>
     </div>
-    <a href="/cart/">View</a>
+
+    <a href="/cart/">View cart</a>
   </aside>
 
   <div class="harvest-dock" aria-live="polite">
     <div class="dock-copy">
-      <small>My Harvest</small>
+      <small id="dock-label">My harvest</small>
       <strong id="dock-status">Add 5.00 kg more</strong>
     </div>
 
@@ -114,6 +157,7 @@
       <div class="progress-track compact">
         <div id="dock-progress-fill" class="progress-fill"></div>
       </div>
+
       <span id="dock-weight">0.00 / 5.00 kg</span>
     </div>
 
@@ -122,14 +166,27 @@
       <strong id="dock-total">S$0.00</strong>
     </div>
 
-    <a id="checkout-button" class="checkout-button disabled" href="/cart/" aria-disabled="true">
+    <button
+      id="reset-cart-button"
+      class="reset-cart-button"
+      type="button"
+      hidden
+    >
+      Reset
+    </button>
+
+    <a
+      id="checkout-button"
+      class="checkout-button disabled"
+      href="/cart/"
+      aria-disabled="true"
+    >
       Continue
     </a>
   </div>
 
-  <script src="/shared.js?v=7"></script>
-  <script src="config.js?v=7"></script>
-  <script src="cart-store.js?v=7"></script>
-  <script src="products.js?v=7"></script>
+  <script src="/shared.js?v=23"></script>
+  <script src="app.js?v=23"></script>
+  <script src="reset-cart.js?v=23"></script>
 </body>
 </html>

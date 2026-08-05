@@ -128,22 +128,26 @@ body {
   transition: width 240ms ease;
 }
 
+/* Sticky search and filter bar
+   The header scrolls away, so this must stick at the actual viewport top.
+*/
 .catalog-tools {
   position: sticky;
-  top: var(--mfb-header-height);
-  z-index: 35;
+  top: 0;
+  z-index: 60;
   margin: 0 calc(clamp(18px, 4vw, 58px) * -1);
   padding: 10px clamp(18px, 4vw, 58px) 9px;
+  border-bottom: 1px solid rgba(24, 51, 35, 0.08);
   background: var(--mfb-cream);
-  border-bottom: 1px solid rgba(24, 51, 35, 0.06);
+  box-shadow: 0 8px 22px rgba(24, 51, 35, 0.07);
 }
 
 .search-box {
+  width: 100%;
+  min-height: 50px;
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
-  min-height: 50px;
   padding: 0 15px;
   border: 1px solid var(--mfb-border);
   border-radius: var(--mfb-radius-sm);
@@ -161,8 +165,8 @@ body {
   padding: 0;
   border: 0;
   border-radius: 0;
-  box-shadow: none;
   background: transparent;
+  box-shadow: none;
   font-size: 16px;
 }
 
@@ -496,13 +500,6 @@ body {
   font-weight: 700;
 }
 
-.render-status {
-  padding: 18px;
-  color: var(--mfb-muted);
-  text-align: center;
-  font-size: 13px;
-}
-
 .cart-toast {
   position: fixed;
   right: 20px;
@@ -559,11 +556,11 @@ body {
   left: 50%;
   bottom: 12px;
   z-index: 80;
-  width: min(980px, calc(100vw - 24px));
+  width: min(1040px, calc(100vw - 24px));
   display: grid;
-  grid-template-columns: 1fr minmax(190px, 270px) auto auto;
+  grid-template-columns: 1fr minmax(190px, 270px) auto auto auto;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   padding: 12px 14px;
   border: 1px solid rgba(24, 51, 35, 0.14);
   border-radius: var(--mfb-radius);
@@ -610,6 +607,26 @@ body {
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.reset-cart-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  border: 1px solid rgba(159, 67, 56, 0.24);
+  border-radius: var(--mfb-radius-sm);
+  background: #fff7f4;
+  color: #9f4338;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reset-cart-button:hover {
+  border-color: #9f4338;
+  background: #fff0ed;
 }
 
 .checkout-button {
@@ -683,7 +700,7 @@ body {
   }
 
   .catalog-tools {
-    top: var(--mfb-header-height);
+    top: 0;
     margin: 0 -8px;
     padding: 6px 8px 5px;
   }
@@ -821,8 +838,8 @@ body {
   .harvest-dock {
     bottom: 7px;
     width: calc(100vw - 14px);
-    grid-template-columns: 1fr auto auto;
-    gap: 8px;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 7px;
     padding: 9px 10px;
     border-radius: 12px;
   }
@@ -844,14 +861,25 @@ body {
     font-size: 11px;
   }
 
+  .reset-cart-button,
   .checkout-button {
     min-height: 34px;
-    padding: 0 11px;
-    font-size: 9px;
+    padding: 0 9px;
+    font-size: 8px;
   }
 
   .cart-toast {
     right: 9px;
     bottom: 76px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dock-total {
+    display: none;
+  }
+
+  .harvest-dock {
+    grid-template-columns: 1fr auto auto;
   }
 }
