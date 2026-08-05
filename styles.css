@@ -101,6 +101,7 @@ main {
   overflow: hidden;
   border-radius: inherit;
   object-fit: cover;
+  object-position: 65% center;
 }
 
 .image-fallback {
@@ -563,6 +564,10 @@ main {
     box-shadow:
       15px 15px 0 #e9dfc4,
       0 28px 55px rgba(32, 68, 37, 0.16);
+  }
+
+  .harvest-image-card > img {
+    object-position: 68% center;
   }
 
   .visual-label.top {
