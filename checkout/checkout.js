@@ -97,19 +97,60 @@
   }
 
   function totals(cart) {
+    if (window.MFBCart) {
+      return window.MFBCart.summarize(
+        cart,
+        {
+          minimumKg:
+            Number(
+              state.settings.minimumOrderKg || 5
+            )
+        }
+      );
+    }
+
+    const weight = cart.reduce(
+      (sum, item) =>
+        sum +
+        unitWeightKg(item) *
+        Number(item.quantity || 0),
+      0
+    );
+
+    const subtotal = cart.reduce(
+      (sum, item) =>
+        sum +
+        Number(
+          item.unitPrice ||
+          item.price ||
+          0
+        ) *
+        Number(item.quantity || 0),
+      0
+    );
+
+    const hasExemptProduct = cart.some(
+      item =>
+        item.minimumOrderExempt === true &&
+        Number(item.quantity || 0) > 0
+    );
+
+    const minimumKg =
+      Number(
+        state.settings.minimumOrderKg || 5
+      );
+
     return {
-      weight: cart.reduce(
-        (sum, item) =>
-          sum + unitWeightKg(item) * Number(item.quantity || 0),
-        0
-      ),
-      subtotal: cart.reduce(
-        (sum, item) =>
-          sum +
-          Number(item.unitPrice || 0) *
-          Number(item.quantity || 0),
-        0
-      )
+      weight,
+      weightKg: weight,
+      subtotal,
+      minimumKg,
+      remainingKg:
+        Math.max(0, minimumKg - weight),
+      hasExemptProduct,
+      qualified:
+        weight >= minimumKg ||
+        hasExemptProduct
     };
   }
 
@@ -172,11 +213,7 @@
   }
 
   function renderSummary() {
-    const summary = window.MFBCart
-    ? window.MFBCart.summarize(state.cart,{
-        minimumKg:state.settings.minimumOrderKg
-      })
-    : totals(state.cart);
+    const summary = totals(state.cart);
     const deliveryFee = Number(state.settings.deliveryFee || 0);
 
     els.summaryItems.innerHTML = "";
@@ -191,7 +228,12 @@
       els.summaryItems.appendChild(row);
     });
 
-    els.summaryWeight.textContent = `${summary.weight.toFixed(2)} kg`;
+    els.summaryWeight.textContent =
+      `${Number(
+        summary.weightKg ??
+        summary.weight ??
+        0
+      ).toFixed(2)} kg`;
     els.summarySubtotal.textContent = currency(summary.subtotal);
     els.summaryDeliveryFee.textContent =
       deliveryFee > 0 ? currency(deliveryFee) : "FREE";
@@ -355,7 +397,9 @@
   }
 
   async function validateCheckout() {
-    state.cart = readJson(CART_KEY, []);
+    state.cart = window.MFBCart
+      ? window.MFBCart.read()
+      : readJson(CART_KEY, []);
 
     if (!state.cart.length) {
       throw new Error("Your harvest basket is empty.");
@@ -401,26 +445,27 @@
 
       return {
         ...item,
-      
         productName: live.name,
         imageUrl: live.imageUrl,
-      
         unitLabel: live.unitLabel,
         unitValue: Number(live.unitValue),
         unitType: live.unitType,
-      
         unitPrice: Number(live.price),
-      
-        // NEW
-        minimumOrderExempt: Boolean(live.minimumOrderExempt),
-        minQuantity: Number(live.minQuantity || 1),
-      
+        minimumOrderExempt:
+          Boolean(live.minimumOrderExempt),
+        minQuantity:
+          Number(live.minQuantity || 1),
         maxQuantity: max
       };
     });
 
     state.cart = refreshed;
-    writeJson(CART_KEY, refreshed);
+
+    if (window.MFBCart) {
+      window.MFBCart.write(refreshed);
+    } else {
+      writeJson(CART_KEY, refreshed);
+    }
 
     state.settings = {
       minimumOrderKg:
@@ -429,16 +474,14 @@
         Number(data.settings?.deliveryFee || 0)
     };
 
-    const summary = window.MFBCart
-      ? window.MFBCart.summarize(refreshed, {
-          minimumKg: state.settings.minimumOrderKg
-        })
-      : totals(refreshed);
+    const summary = totals(refreshed);
 
     if (!summary.qualified) {
-        throw new Error(
-            `Add ${summary.remainingKg.toFixed(2)} kg more to reach the minimum.`
-        );
+      throw new Error(
+        `Add ${Number(
+          summary.remainingKg || 0
+        ).toFixed(2)} kg more, or choose a qualifying Combo Box.`
+      );
     }
 
     state.delivery =
@@ -470,11 +513,7 @@
 
   function collectPayload() {
     const draftData = draft();
-    const summary = window.MFBCart
-      ? window.MFBCart.summarize(state.cart, {
-          minimumKg: state.settings.minimumOrderKg
-        })
-      : totals(state.cart);
+    const summary = totals(state.cart);
 
     return {
       action: "createOrder",
@@ -506,11 +545,19 @@
         ? draftData.returns
         : [],
       source: "myfarmbox.sg",
-      clientSummary:{
-          weightKg:summary.weightKg,
-          subtotal:summary.subtotal,
-          qualified:summary.qualified,
-          hasExemptProduct:summary.hasExemptProduct
+      clientSummary: {
+        weightKg:
+          Number(
+            summary.weightKg ??
+            summary.weight ??
+            0
+          ),
+        subtotal:
+          Number(summary.subtotal || 0),
+        qualified:
+          Boolean(summary.qualified),
+        hasExemptProduct:
+          Boolean(summary.hasExemptProduct)
       }
     };
   }
@@ -546,12 +593,19 @@
         updatedAt: new Date().toISOString()
       });
 
-      localStorage.removeItem(CART_KEY);
-      localStorage.removeItem(DRAFT_KEY);
+      if (window.MFBCart) {
+        window.MFBCart.clear();
+      } else {
+        localStorage.removeItem(CART_KEY);
 
-      if (typeof window.updateSharedCartCount === "function") {
-        window.updateSharedCartCount();
+        if (
+          typeof window.updateSharedCartCount === "function"
+        ) {
+          window.updateSharedCartCount();
+        }
       }
+
+      localStorage.removeItem(DRAFT_KEY);
 
       els.successOrderId.textContent = data.orderId;
       els.successDelivery.textContent =
