@@ -172,7 +172,11 @@
   }
 
   function renderSummary() {
-    const summary = totals(state.cart);
+    const summary = window.MFBCart
+    ? window.MFBCart.summarize(state.cart,{
+        minimumKg:state.settings.minimumOrderKg
+      })
+    : totals(state.cart);
     const deliveryFee = Number(state.settings.deliveryFee || 0);
 
     els.summaryItems.innerHTML = "";
@@ -397,12 +401,20 @@
 
       return {
         ...item,
+      
         productName: live.name,
         imageUrl: live.imageUrl,
+      
         unitLabel: live.unitLabel,
         unitValue: Number(live.unitValue),
         unitType: live.unitType,
+      
         unitPrice: Number(live.price),
+      
+        // NEW
+        minimumOrderExempt: Boolean(live.minimumOrderExempt),
+        minQuantity: Number(live.minQuantity || 1),
+      
         maxQuantity: max
       };
     });
@@ -417,12 +429,16 @@
         Number(data.settings?.deliveryFee || 0)
     };
 
-    const summary = totals(refreshed);
+    const summary = window.MFBCart
+      ? window.MFBCart.summarize(refreshed, {
+          minimumKg: state.settings.minimumOrderKg
+        })
+      : totals(refreshed);
 
-    if (summary.weight < state.settings.minimumOrderKg) {
-      throw new Error(
-        `Add ${(state.settings.minimumOrderKg - summary.weight).toFixed(2)} kg more to reach the minimum.`
-      );
+    if (!summary.qualified) {
+        throw new Error(
+            `Add ${summary.remainingKg.toFixed(2)} kg more to reach the minimum.`
+        );
     }
 
     state.delivery =
@@ -454,7 +470,11 @@
 
   function collectPayload() {
     const draftData = draft();
-    const summary = totals(state.cart);
+    const summary = window.MFBCart
+      ? window.MFBCart.summarize(state.cart, {
+          minimumKg: state.settings.minimumOrderKg
+        })
+      : totals(state.cart);
 
     return {
       action: "createOrder",
@@ -486,9 +506,11 @@
         ? draftData.returns
         : [],
       source: "myfarmbox.sg",
-      clientSummary: {
-        weightKg: summary.weight,
-        subtotal: summary.subtotal
+      clientSummary:{
+          weightKg:summary.weightKg,
+          subtotal:summary.subtotal,
+          qualified:summary.qualified,
+          hasExemptProduct:summary.hasExemptProduct
       }
     };
   }
