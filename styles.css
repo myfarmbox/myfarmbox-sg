@@ -76,14 +76,14 @@ main {
 }
 
 .hero-visual {
-  min-height: 520px;
+  min-height: 600px;
   display: grid;
   place-items: center;
 }
 
 .harvest-image-card {
   position: relative;
-  width: min(100%, 500px);
+  width: min(100%, 580px);
   aspect-ratio: 0.92 / 1;
   overflow: visible;
   border-radius: 38px;
@@ -553,12 +553,12 @@ main {
   }
 
   .hero-visual {
-    min-height: 390px;
+    min-height: 430px;
   }
 
   .harvest-image-card {
     width: 86vw;
-    max-width: 380px;
+    max-width: 420px;
     border-radius: 28px;
     box-shadow:
       15px 15px 0 #e9dfc4,
