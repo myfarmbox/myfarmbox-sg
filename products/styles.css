@@ -883,3 +883,59 @@ body {
     grid-template-columns: 1fr auto auto;
   }
 }
+
+
+/* Compatibility with the existing products/app.js card markup */
+
+.add-button {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 8px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--mfb-green);
+  border-radius: var(--mfb-radius-sm);
+  background: var(--mfb-green);
+  color: var(--mfb-white);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.add-button:hover {
+  background: var(--mfb-green-dark);
+}
+
+.product-total {
+  min-height: 20px;
+  margin: 8px 0 0;
+  color: var(--mfb-green-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.render-status {
+  margin: 18px 0 0;
+  color: var(--mfb-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+@media (max-width: 820px) {
+  .add-button {
+    min-height: 30px;
+    margin-top: 5px;
+    border-radius: 8px;
+    font-size: 9px;
+  }
+
+  .product-total {
+    min-height: 12px;
+    margin-top: 4px;
+    font-size: 7px;
+  }
+
+  .render-status {
+    margin-top: 10px;
+    font-size: 9px;
+  }
+}
