@@ -12,10 +12,7 @@
   let toastTimer = null;
   let addressMap = null;
   let addressMarker = null;
-  let savedAddressMap = null;
-  let savedAddressMarker = null;
   let addressMapObserver = null;
-  let savedMapObserver = null;
   let geocodeController = null;
   const DEFAULT_MAP_CENTER = [1.3521, 103.8198];
 
@@ -489,49 +486,31 @@
   function renderSavedAddressMap(latLong) {
     const point = parseLatLong(latLong);
 
-    if (
-      !point ||
-      typeof L === "undefined" ||
-      !els.savedAddressMap
-    ) {
+    if (!point || !els.savedAddressMap) {
       els.savedLocationWrap.hidden = true;
       return;
     }
 
+    const [lat, lng] = point;
+    const delta = 0.006;
+
+    const left = lng - delta;
+    const bottom = lat - delta;
+    const right = lng + delta;
+    const top = lat + delta;
+
+    const params = new URLSearchParams({
+      bbox: `${left},${bottom},${right},${top}`,
+      layer: "mapnik",
+      marker: `${lat},${lng}`
+    });
+
     els.savedLocationWrap.hidden = false;
     els.savedLocationCoordinates.textContent =
-      formatLatLong(point[0], point[1]);
+      formatLatLong(lat, lng);
 
-    window.requestAnimationFrame(() => {
-      if (!savedAddressMap) {
-        savedAddressMap = L.map("saved-address-map", {
-          zoomControl: true,
-          attributionControl: true,
-          dragging: true,
-          scrollWheelZoom: false,
-          tap: true
-        });
-
-        addOpenStreetMapTiles(savedAddressMap);
-
-        savedMapObserver = observeMapContainer(
-          els.savedAddressMap,
-          savedAddressMap,
-          "saved"
-        );
-      }
-
-      if (!savedAddressMarker) {
-        savedAddressMarker = L.marker(point, {
-          icon: deliveryPinIcon(),
-          interactive: false
-        }).addTo(savedAddressMap);
-      } else {
-        savedAddressMarker.setLatLng(point);
-      }
-
-      settleMap(savedAddressMap, point, 17);
-    });
+    els.savedAddressMap.src =
+      `https://www.openstreetmap.org/export/embed.html?${params.toString()}`;
   }
 
   async function reverseGeocodeLocation(lat, lng) {
@@ -754,6 +733,27 @@
     updateMapFields(lat, lng, message);
   }
 
+  function destroyAddressMap() {
+    if (addressMapObserver) {
+      addressMapObserver.disconnect();
+      addressMapObserver = null;
+    }
+
+    if (addressMap) {
+      addressMap.off();
+      addressMap.remove();
+      addressMap = null;
+    }
+
+    addressMarker = null;
+
+    if (els.addressMap) {
+      els.addressMap.innerHTML = "";
+      els.addressMap.removeAttribute("style");
+      els.addressMap.className = "";
+    }
+  }
+
   function initialiseAddressMap(savedLatLong) {
     if (typeof L === "undefined") {
       setMapError(
@@ -762,46 +762,47 @@
       return;
     }
 
+    destroyAddressMap();
+
     const saved = parseLatLong(savedLatLong);
     const initial = saved || DEFAULT_MAP_CENTER;
 
-    const createMapWhenVisible = () => {
+    const buildMap = () => {
       const rect = els.addressMap.getBoundingClientRect();
 
-      if (rect.width < 120 || rect.height < 120) {
-        window.requestAnimationFrame(createMapWhenVisible);
+      if (rect.width < 200 || rect.height < 200) {
+        window.setTimeout(buildMap, 80);
         return;
       }
 
-      if (!addressMap) {
-        addressMap = L.map("address-map", {
-          zoomControl: true,
-          attributionControl: true,
-          tap: true,
-          dragging: true
-        });
+      addressMap = L.map(els.addressMap, {
+        zoomControl: true,
+        attributionControl: true,
+        tap: true,
+        dragging: true,
+        scrollWheelZoom: true
+      });
 
-        addOpenStreetMapTiles(addressMap);
+      addOpenStreetMapTiles(addressMap);
 
-        addressMapObserver = observeMapContainer(
-          els.addressMap,
-          addressMap,
-          "edit"
+      addressMapObserver = observeMapContainer(
+        els.addressMap,
+        addressMap,
+        "edit"
+      );
+
+      addressMap.on("click", event => {
+        createOrMoveMarker(
+          event.latlng.lat,
+          event.latlng.lng,
+          "Delivery pin moved."
         );
 
-        addressMap.on("click", event => {
-          createOrMoveMarker(
-            event.latlng.lat,
-            event.latlng.lng,
-            "Delivery pin moved."
-          );
-
-          updateAddressFromPin(
-            event.latlng.lat,
-            event.latlng.lng
-          );
-        });
-      }
+        updateAddressFromPin(
+          event.latlng.lat,
+          event.latlng.lng
+        );
+      });
 
       if (saved) {
         createOrMoveMarker(
@@ -809,24 +810,31 @@
           saved[1],
           "Saved delivery pin loaded."
         );
-        settleMap(addressMap, saved, 17);
+        addressMap.setView(saved, 17, { animate: false });
       } else {
-        if (addressMarker) {
-          addressMap.removeLayer(addressMarker);
-          addressMarker = null;
-        }
-
+        addressMap.setView(initial, 11, { animate: false });
         els.editLatLong.value = "";
         els.mapCoordinates.textContent = "";
         els.mapStatus.textContent =
           "Tap the map, find the written address, or use your current location.";
         els.mapStatus.className = "";
-
-        settleMap(addressMap, initial, 11);
       }
+
+      window.setTimeout(() => {
+        addressMap.invalidateSize({ animate: false });
+        addressMap.setView(
+          saved || initial,
+          saved ? 17 : 11,
+          { animate: false }
+        );
+      }, 120);
+
+      window.setTimeout(() => {
+        addressMap.invalidateSize({ animate: false });
+      }, 420);
     };
 
-    createMapWhenVisible();
+    window.setTimeout(buildMap, 120);
   }
 
   function useCurrentLocation() {
