@@ -771,7 +771,7 @@ This package is prepared for integrating those UI hooks.
       const preferredOrder = [
         "Veggie",
         "Fruits",
-        "Sweetners",
+        "Sweeteners",
         "Oils",
         "Combo Box"
       ];
