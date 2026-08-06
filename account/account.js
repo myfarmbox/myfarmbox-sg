@@ -729,7 +729,18 @@
       addressMarker.setLatLng(point);
     }
 
-    addressMap.setView(point, Math.max(addressMap.getZoom(), 17));
+    const currentZoom = addressMap.getZoom();
+    
+    const targetZoom = Number.isFinite(currentZoom)
+      ? Math.max(currentZoom, 17)
+      : 17;
+    
+    addressMap.setView(
+      point,
+      targetZoom,
+      { animate: false }
+    );
+    
     updateMapFields(lat, lng, message);
   }
 
@@ -805,13 +816,19 @@
       });
 
       if (saved) {
+        addressMap.setView(
+          saved,
+          17,
+          { animate: false }
+        );
+      
         createOrMoveMarker(
           saved[0],
           saved[1],
           "Saved delivery pin loaded."
         );
-        addressMap.setView(saved, 17, { animate: false });
-      } else {
+      }
+      else {
         addressMap.setView(initial, 11, { animate: false });
         els.editLatLong.value = "";
         els.mapCoordinates.textContent = "";
