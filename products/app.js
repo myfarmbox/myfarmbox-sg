@@ -12,6 +12,8 @@ This package is prepared for integrating those UI hooks.
 
   const API_URL =
     "https://script.google.com/macros/s/AKfycbw4ioZTLJKaFXWad3zJqyWXzde7-I5S6Q9LndoF2zu7EzgnEku75U2nAkceQBXLjpJi/exec";
+  const PRODUCTS_JSON_URL =
+  "/data/products.json";
 
   const CART_STORAGE_KEY = "mfb_sg_cart_v1";
   const DEFAULT_MINIMUM_ORDER_KG = 5;
