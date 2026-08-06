@@ -120,11 +120,21 @@
     const total = cartStore.totalValue(cart);
     const minimumKg = Number(state.minimumOrderKg);
     const remaining = Math.max(0, minimumKg - weightKg);
-    const ready = weightKg >= minimumKg;
+    const hasExemptProduct = cart.some(
+      item =>
+        item.minimumOrderExempt === true &&
+        Number(item.quantity || 0) > 0
+    );
 
-    const progress = minimumKg > 0
-      ? Math.min(100, (weightKg / minimumKg) * 100)
-      : 100;
+    const ready =
+      weightKg >= minimumKg ||
+      hasExemptProduct;
+
+    const progress = hasExemptProduct
+      ? 100
+      : minimumKg > 0
+        ? Math.min(100, (weightKg / minimumKg) * 100)
+        : 100;
 
     elements.cartCount.textContent = String(itemCount);
     elements.minimumWeight.textContent =
@@ -135,7 +145,25 @@
       `${weightKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg`;
     elements.dockTotal.textContent = currency(total);
 
-    if (ready) {
+    if (hasExemptProduct) {
+      elements.minimumStatus.textContent =
+        "Your harvest is ready for purchase.";
+
+      elements.minimumWeight.textContent =
+        "Complete harvest selected";
+
+      elements.dockStatus.textContent =
+        "Harvest ready ✓";
+
+      elements.dockWeight.textContent =
+        "Ready for purchase";
+
+      elements.minimumProgress.style.width = "100%";
+      elements.dockProgressFill.style.width = "100%";
+
+      elements.checkoutButton.classList.remove("disabled");
+      elements.checkoutButton.setAttribute("aria-disabled", "false");
+    } else if (ready) {
       elements.minimumStatus.textContent = "Your harvest is ready.";
       elements.dockStatus.textContent = "Ready for checkout ✓";
       elements.checkoutButton.classList.remove("disabled");
@@ -236,7 +264,7 @@
     card.dataset.productId = product.handleId;
 
     card.innerHTML = `
-      ${inCart ? `<span class="in-harvest-badge">✓ ${quantity} added</span>` : ""}
+      ${inCart ? `<span class="in-harvest-badge">✓ In harvest</span>` : ""}
 
       <div class="product-image-wrap">
         ${
@@ -266,23 +294,32 @@
       </div>
 
       <div class="product-body">
-        <h2 class="product-title">${escapeHtml(name.primary)}</h2>
-        <p class="product-native">${escapeHtml(name.native)}</p>
+        <div class="product-copy">
+          <h2 class="product-title">${escapeHtml(name.primary)}</h2>
 
-        <span class="product-unit">${escapeHtml(product.unitLabel)}</span>
-        <strong class="product-price">${currency(product.price)}</strong>
+          <p class="product-description">
+            ${escapeHtml(product.description || "Fresh produce for everyday cooking")}
+          </p>
+        </div>
 
-        <p class="selection-copy">
-          ${
-            inCart
-              ? `${totalPhysicalQuantity(product, quantity)} selected`
-              : "Not yet added"
-          }
-        </p>
+        <div class="product-meta">
+          <span class="product-unit">${escapeHtml(product.unitLabel)}</span>
+          <strong class="product-price">${currency(product.price)}</strong>
+        </div>
 
         <div class="product-controls">
           ${createControl(product, quantity)}
         </div>
+
+        <p class="selection-copy">
+          ${
+            inCart
+              ? `${quantity} added · ${currency(
+                  Number(product.price || 0) * quantity
+                )}`
+              : ""
+          }
+        </p>
       </div>
     `;
 
@@ -294,7 +331,13 @@
 
     if (add) {
       add.addEventListener("click", () => {
-        setProductQuantity(product, 1);
+        setProductQuantity(
+          product,
+          Math.max(
+            1,
+            Number(product.minQuantity || 1)
+          )
+        );
       });
     }
 
@@ -351,13 +394,49 @@
   }
 
   function renderFilters(categories) {
+    const preferredOrder = [
+      "Veggie",
+      "Fruit",
+      "Fruits",
+      "Sweeteners",
+      "Sweetners",
+      "Oil",
+      "Oils",
+      "Combo Box"
+    ];
+
+    const categoryMap = new Map(
+      categories.map(category => [
+        String(category).trim().toLowerCase(),
+        category
+      ])
+    );
+
+    const ordered = [];
+
+    preferredOrder.forEach(preferred => {
+      const key = preferred.toLowerCase();
+      const match = categoryMap.get(key);
+
+      if (match && !ordered.includes(match)) {
+        ordered.push(match);
+        categoryMap.delete(key);
+      }
+    });
+
+    ordered.push(
+      ...[...categoryMap.values()].sort(
+        (a, b) => a.localeCompare(b)
+      )
+    );
+
     elements.filters.innerHTML = `
       <button class="filter-chip active" type="button" data-category="all">
         All
       </button>
     `;
 
-    categories.forEach(category => {
+    ordered.forEach(category => {
       const button = document.createElement("button");
       button.className = "filter-chip";
       button.type = "button";
@@ -379,7 +458,8 @@
         product.name,
         product.tanglish,
         product.collection,
-        product.unitLabel
+        product.unitLabel,
+        product.description
       ]
         .join(" ")
         .toLowerCase();
@@ -542,7 +622,18 @@
   elements.clearFilters.addEventListener("click", clearFilters);
 
   elements.checkoutButton.addEventListener("click", event => {
-    if (cartStore.totalWeightKg() < state.minimumOrderKg) {
+    const cart = cartStore.read();
+
+    const hasExemptProduct = cart.some(
+      item =>
+        item.minimumOrderExempt === true &&
+        Number(item.quantity || 0) > 0
+    );
+
+    if (
+      cartStore.totalWeightKg() < state.minimumOrderKg &&
+      !hasExemptProduct
+    ) {
       event.preventDefault();
     }
   });
