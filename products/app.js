@@ -768,21 +768,69 @@ This package is prepared for integrating those UI hooks.
   }
 
   function renderFilters(categories) {
-    elements.filters.innerHTML = `
-      <button class="filter-chip active" type="button" data-category="all">
-        All
-      </button>
-    `;
-
-    categories.forEach(category => {
-      const button = document.createElement("button");
-      button.className = "filter-chip";
-      button.type = "button";
-      button.dataset.category = category;
-      button.textContent = category;
-      elements.filters.appendChild(button);
-    });
-  }
+      const preferredOrder = [
+        "Veggie",
+        "Fruits",
+        "Sweetners",
+        "Oils",
+        "Combo Box"
+      ];
+    
+      const categoryMap = new Map(
+        categories.map(category => [
+          String(category).trim().toLowerCase(),
+          category
+        ])
+      );
+    
+      const orderedCategories = [];
+    
+      preferredOrder.forEach(preferred => {
+        const match = categoryMap.get(
+          preferred.toLowerCase()
+        );
+    
+        if (match) {
+          orderedCategories.push(match);
+          categoryMap.delete(
+            preferred.toLowerCase()
+          );
+        }
+      });
+    
+      const remainingCategories = [
+        ...categoryMap.values()
+      ].sort((a, b) =>
+        a.localeCompare(b)
+      );
+    
+      const finalCategories = [
+        ...orderedCategories,
+        ...remainingCategories
+      ];
+    
+      elements.filters.innerHTML = `
+        <button
+          class="filter-chip active"
+          type="button"
+          data-category="all"
+        >
+          All
+        </button>
+      `;
+    
+      finalCategories.forEach(category => {
+        const button =
+          document.createElement("button");
+    
+        button.className = "filter-chip";
+        button.type = "button";
+        button.dataset.category = category;
+        button.textContent = category;
+    
+        elements.filters.appendChild(button);
+      });
+    }
 
   function applyFilters() {
     const term = state.searchTerm.trim().toLowerCase();
