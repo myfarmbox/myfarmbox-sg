@@ -1,6 +1,6 @@
 
 /*
-UI UPDATE (v9 — fast cached product loading)
+UI UPDATE (v10 — minimal add-then-quantity cards)
 - Cards should display "In Harvest" state when quantity > 0 in cart.
 - Quantity shown as "🧺 X added".
 - Card receives class 'in-cart'.
@@ -499,47 +499,91 @@ This package is prepared for integrating those UI hooks.
     }).format(Number(value || 0));
   }
 
-  function totalPhysicalQuantity(product, quantity) {
-    const total = Number(product.unitValue || 1) * Number(quantity || 1);
-    const unit = String(product.unitType || "").trim();
 
-    if (unit === "g" && total >= 1000) {
-      const kg = total / 1000;
-      return `${Number.isInteger(kg) ? kg : kg.toFixed(2)} kg`;
-    }
-
-    if (unit === "ml" && total >= 1000) {
-      const litres = total / 1000;
-      return `${Number.isInteger(litres) ? litres : litres.toFixed(2)} l`;
-    }
-
-    return `${Number.isInteger(total) ? total : total.toFixed(2)} ${unit}`.trim();
+  function getCartItem(productId) {
+    return readCart().find(
+      item => item.productId === productId
+    ) || null;
   }
 
-  function getQuantity(product) {
-    if (!state.quantities.has(product.handleId)) {
-      state.quantities.set(
-        product.handleId,
-        Math.max(1, Number(product.minQuantity || 1))
+  function getBaseQuantity(product) {
+    return Math.max(
+      1,
+      Number(product.minQuantity || 1)
+    );
+  }
+
+  function getMaximumQuantity(product) {
+    return Math.min(
+      Number(
+        product.maxQuantity ||
+        product.stockUnits ||
+        99
+      ),
+      Number(product.stockUnits || 99)
+    );
+  }
+
+  function getIncrement(product) {
+    return Math.max(
+      1,
+      Number(product.incrementBy || 1)
+    );
+  }
+
+  function makeCartItem(product, quantity) {
+    return {
+      productId: product.handleId,
+      productName: product.name,
+      tanglish: product.tanglish,
+      collection: product.collection,
+      imageUrl:
+        normalizeImageUrl(product.imageUrl),
+      unitLabel: product.unitLabel,
+      unitValue: Number(product.unitValue),
+      unitType: product.unitType,
+      unitPrice: Number(product.price),
+      quantity: Number(quantity),
+      minQuantity:
+        getBaseQuantity(product),
+      maxQuantity:
+        getMaximumQuantity(product),
+      incrementBy:
+        getIncrement(product),
+      minimumOrderExempt:
+        Boolean(product.minimumOrderExempt)
+    };
+  }
+
+  function setCartQuantity(product, nextQuantity) {
+    const cart = readCart();
+    const index = cart.findIndex(
+      item =>
+        item.productId === product.handleId
+    );
+
+    const max = getMaximumQuantity(product);
+    const next = Math.min(
+      max,
+      Math.max(0, Number(nextQuantity || 0))
+    );
+
+    if (next <= 0) {
+      if (index >= 0) {
+        cart.splice(index, 1);
+      }
+    } else if (index >= 0) {
+      cart[index] = makeCartItem(
+        product,
+        next
+      );
+    } else {
+      cart.push(
+        makeCartItem(product, next)
       );
     }
 
-    return state.quantities.get(product.handleId);
-  }
-
-  function setQuantity(product, nextValue) {
-    const min = Math.max(1, Number(product.minQuantity || 1));
-    const max = Math.min(
-      Number(product.maxQuantity || product.stockUnits || 99),
-      Number(product.stockUnits || 99)
-    );
-    const increment = Math.max(1, Number(product.incrementBy || 1));
-
-    let value = Math.max(min, Math.min(max, Number(nextValue || min)));
-    const steps = Math.round((value - min) / increment);
-    value = Math.max(min, Math.min(max, min + steps * increment));
-
-    state.quantities.set(product.handleId, value);
+    writeCart(cart);
     updateProductQuantityUI(product);
   }
 
@@ -550,16 +594,73 @@ This package is prepared for integrating those UI hooks.
 
     if (!card) return;
 
-    const quantity = getQuantity(product);
-    const min = Math.max(1, Number(product.minQuantity || 1));
-    const max = Math.min(
-      Number(product.maxQuantity || product.stockUnits || 99),
-      Number(product.stockUnits || 99)
+    const cartItem =
+      getCartItem(product.handleId);
+
+    const addedQuantity = Number(
+      cartItem?.quantity || 0
     );
 
-    card.querySelector("[data-quantity-value]").textContent = String(quantity);
-    card.querySelector("[data-quantity-minus]").disabled = quantity <= min;
-    card.querySelector("[data-quantity-plus]").disabled = quantity >= max;
+    const inCart = addedQuantity > 0;
+    const max = getMaximumQuantity(product);
+    const increment = getIncrement(product);
+
+    const addButton =
+      card.querySelector("[data-add-to-cart]");
+
+    const quantityControl =
+      card.querySelector("[data-cart-quantity-control]");
+
+    const quantityValue =
+      card.querySelector("[data-quantity-value]");
+
+    const minusButton =
+      card.querySelector("[data-quantity-minus]");
+
+    const plusButton =
+      card.querySelector("[data-quantity-plus]");
+
+    const addedSummary =
+      card.querySelector("[data-added-summary]");
+
+    const inHarvestBadge =
+      card.querySelector("[data-in-harvest-badge]");
+
+    card.classList.toggle(
+      "in-cart",
+      inCart
+    );
+
+    addButton.hidden = inCart;
+    quantityControl.hidden = !inCart;
+    addedSummary.hidden = !inCart;
+    inHarvestBadge.hidden = !inCart;
+
+    if (!inCart) {
+      quantityValue.textContent = "0";
+      addedSummary.textContent = "";
+      return;
+    }
+
+    quantityValue.textContent =
+      String(addedQuantity);
+
+    minusButton.disabled = false;
+    plusButton.disabled =
+      addedQuantity + increment > max;
+
+    addedSummary.textContent =
+      `${addedQuantity} added · ` +
+      `${currency(
+        Number(product.price || 0) *
+        addedQuantity
+      )}`;
+  }
+
+  function refreshRenderedProductStates() {
+    state.products.forEach(product => {
+      updateProductQuantityUI(product);
+    });
   }
 
   function initialiseImage(card, imageUrl) {
@@ -605,12 +706,15 @@ This package is prepared for integrating those UI hooks.
 
   function createProductCard(product, renderIndex = 0) {
     const name = productDisplayName(product);
-    const imageUrl = normalizeImageUrl(product.imageUrl);
-    const quantity = getQuantity(product);
+    const imageUrl =
+      normalizeImageUrl(product.imageUrl);
 
-    const card = document.createElement("article");
+    const card =
+      document.createElement("article");
+
     card.className = "product-card";
-    card.dataset.productId = product.handleId;
+    card.dataset.productId =
+      product.handleId;
 
     card.innerHTML = `
       <div class="product-image-wrap">
@@ -627,9 +731,15 @@ This package is prepared for integrating those UI hooks.
             : ""
         }
 
-        <div class="image-loading"${imageUrl ? "" : " hidden"}></div>
+        <div
+          class="image-loading"
+          ${imageUrl ? "" : "hidden"}
+        ></div>
 
-        <div class="product-placeholder"${imageUrl ? " hidden" : ""}>
+        <div
+          class="product-placeholder"
+          ${imageUrl ? "hidden" : ""}
+        >
           <div>
             <span aria-hidden="true">🌿</span>
             <strong>MyFarmBox</strong>
@@ -637,7 +747,18 @@ This package is prepared for integrating those UI hooks.
         </div>
 
         <span class="product-category">
-          ${escapeHtml(product.collection || "Harvest")}
+          ${escapeHtml(
+            product.collection ||
+            "Harvest"
+          )}
+        </span>
+
+        <span
+          class="in-harvest-badge"
+          data-in-harvest-badge
+          hidden
+        >
+          ✓ In harvest
         </span>
 
         ${
@@ -652,116 +773,140 @@ This package is prepared for integrating those UI hooks.
       </div>
 
       <div class="product-body">
-        <h2 class="product-title">
+        <div class="product-copy">
+          <h2 class="product-title">
             ${escapeHtml(name.primary)}
           </h2>
-          
+
           ${
             product.description
               ? `
                 <p class="product-description">
-                  ${escapeHtml(product.description)}
+                  ${escapeHtml(
+                    product.description
+                  )}
                 </p>
               `
-              : ""
+              : `
+                <p
+                  class="product-description product-description-empty"
+                  aria-hidden="true"
+                >
+                  &nbsp;
+                </p>
+              `
           }
-          
+        </div>
+
+        <div class="product-meta">
           <span class="product-unit">
             ${escapeHtml(product.unitLabel)}
           </span>
-        <strong class="product-price">${currency(product.price)}</strong>
 
-        <div class="product-controls">
-          <div class="quantity-control">
-            <button type="button" data-quantity-minus aria-label="Reduce quantity">−</button>
-            <span class="quantity-value" data-quantity-value>${quantity}</span>
-            <button type="button" data-quantity-plus aria-label="Increase quantity">+</button>
-          </div>
-
-          <button class="add-button" type="button" data-add-to-cart>Add</button>
+          <strong class="product-price">
+            ${currency(product.price)}
+          </strong>
         </div>
 
+        <div class="product-action-area">
+          <button
+            class="add-button"
+            type="button"
+            data-add-to-cart
+          >
+            Add
+          </button>
+
+          <div
+            class="quantity-control cart-quantity-control"
+            data-cart-quantity-control
+            hidden
+          >
+            <button
+              type="button"
+              data-quantity-minus
+              aria-label="Remove one quantity"
+            >
+              −
+            </button>
+
+            <span
+              class="quantity-value"
+              data-quantity-value
+            >
+              0
+            </span>
+
+            <button
+              type="button"
+              data-quantity-plus
+              aria-label="Add one quantity"
+            >
+              +
+            </button>
+          </div>
+
+          <p
+            class="added-summary"
+            data-added-summary
+            hidden
+          ></p>
+        </div>
       </div>
     `;
 
     initialiseImage(card, imageUrl);
 
-    card.querySelector("[data-quantity-minus]").addEventListener("click", () => {
-      setQuantity(
-        product,
-        getQuantity(product) - Number(product.incrementBy || 1)
-      );
-    });
+    card
+      .querySelector("[data-add-to-cart]")
+      .addEventListener("click", () => {
+        const baseQuantity =
+          getBaseQuantity(product);
 
-    card.querySelector("[data-quantity-plus]").addEventListener("click", () => {
-      setQuantity(
-        product,
-        getQuantity(product) + Number(product.incrementBy || 1)
-      );
-    });
+        setCartQuantity(
+          product,
+          baseQuantity
+        );
 
-    card.querySelector("[data-add-to-cart]").addEventListener("click", event => {
-      addToCart(product, getQuantity(product), event.currentTarget);
-    });
+        showToast(
+          "Added to your harvest",
+          `${baseQuantity} × ${name.primary}`
+        );
+      });
 
-    requestAnimationFrame(() => updateProductQuantityUI(product));
+    card
+      .querySelector("[data-quantity-minus]")
+      .addEventListener("click", () => {
+        const current = Number(
+          getCartItem(product.handleId)
+            ?.quantity || 0
+        );
+
+        setCartQuantity(
+          product,
+          current - getIncrement(product)
+        );
+      });
+
+    card
+      .querySelector("[data-quantity-plus]")
+      .addEventListener("click", () => {
+        const current = Number(
+          getCartItem(product.handleId)
+            ?.quantity || 0
+        );
+
+        setCartQuantity(
+          product,
+          current + getIncrement(product)
+        );
+      });
+
+    requestAnimationFrame(() => {
+      updateProductQuantityUI(product);
+    });
 
     return card;
-  }
-
-  function addToCart(product, quantity, button) {
-    const cart = readCart();
-    const existing = cart.find(item => item.productId === product.handleId);
-
-    if (existing) {
-      existing.quantity = Math.min(
-        Number(product.maxQuantity || product.stockUnits || 99),
-        Number(existing.quantity || 0) + Number(quantity || 1)
-      );
-      existing.unitPrice = Number(product.price);
-      existing.unitLabel = product.unitLabel;
-      existing.unitValue = Number(product.unitValue);
-      existing.unitType = product.unitType;
-      existing.imageUrl = normalizeImageUrl(product.imageUrl);
-      existing.productName = product.name;
-      existing.collection = product.collection;
-      existing.minimumOrderExempt =
-        Boolean(product.minimumOrderExempt);
-    } else {
-      cart.push({
-        productId: product.handleId,
-        productName: product.name,
-        tanglish: product.tanglish,
-        collection: product.collection,
-        imageUrl: normalizeImageUrl(product.imageUrl),
-        unitLabel: product.unitLabel,
-        unitValue: Number(product.unitValue),
-        unitType: product.unitType,
-        unitPrice: Number(product.price),
-        quantity: Number(quantity),
-        minQuantity: Number(product.minQuantity || 1),
-        maxQuantity: Number(product.maxQuantity || product.stockUnits || 99),
-        incrementBy: Number(product.incrementBy || 1),
-        minimumOrderExempt:
-          Boolean(product.minimumOrderExempt)
-      });
-    }
-
-    writeCart(cart);
-
-    const original = button.textContent;
-    button.textContent = "✓";
-
-    window.setTimeout(() => {
-      button.textContent = original;
-    }, 900);
-
-    const displayName = productDisplayName(product).primary;
-
-    showToast(
-      "Added to your harvest",
-      `${quantity} × ${displayName}`
-    );
   }
 
   function showToast(title, copy) {
@@ -777,69 +922,21 @@ This package is prepared for integrating those UI hooks.
   }
 
   function renderFilters(categories) {
-      const preferredOrder = [
-        "Veggie",
-        "Fruits",
-        "Sweeteners",
-        "Oils",
-        "Combo Box"
-      ];
-    
-      const categoryMap = new Map(
-        categories.map(category => [
-          String(category).trim().toLowerCase(),
-          category
-        ])
-      );
-    
-      const orderedCategories = [];
-    
-      preferredOrder.forEach(preferred => {
-        const match = categoryMap.get(
-          preferred.toLowerCase()
-        );
-    
-        if (match) {
-          orderedCategories.push(match);
-          categoryMap.delete(
-            preferred.toLowerCase()
-          );
-        }
-      });
-    
-      const remainingCategories = [
-        ...categoryMap.values()
-      ].sort((a, b) =>
-        a.localeCompare(b)
-      );
-    
-      const finalCategories = [
-        ...orderedCategories,
-        ...remainingCategories
-      ];
-    
-      elements.filters.innerHTML = `
-        <button
-          class="filter-chip active"
-          type="button"
-          data-category="all"
-        >
-          All
-        </button>
-      `;
-    
-      finalCategories.forEach(category => {
-        const button =
-          document.createElement("button");
-    
-        button.className = "filter-chip";
-        button.type = "button";
-        button.dataset.category = category;
-        button.textContent = category;
-    
-        elements.filters.appendChild(button);
-      });
-    }
+    elements.filters.innerHTML = `
+      <button class="filter-chip active" type="button" data-category="all">
+        All
+      </button>
+    `;
+
+    categories.forEach(category => {
+      const button = document.createElement("button");
+      button.className = "filter-chip";
+      button.type = "button";
+      button.dataset.category = category;
+      button.textContent = category;
+      elements.filters.appendChild(button);
+    });
+  }
 
   function applyFilters() {
     const term = state.searchTerm.trim().toLowerCase();
@@ -1102,6 +1199,14 @@ This package is prepared for integrating those UI hooks.
       if (!getCartEligibility().qualified) {
         event.preventDefault();
       }
+    }
+  );
+
+  window.addEventListener(
+    "mfb:cart-changed",
+    () => {
+      updateCartSummary();
+      refreshRenderedProductStates();
     }
   );
 
