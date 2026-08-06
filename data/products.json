@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "generatedAt": "2026-08-06T00:00:00.000Z",
+  "count": 0,
+  "settings": {
+    "minimumOrderKg": 5,
+    "deliveryFee": 0,
+    "currency": "SGD"
+  },
+  "categories": [],
+  "products": []
+}
