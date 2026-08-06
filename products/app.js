@@ -1,6 +1,6 @@
 
 /*
-UI UPDATE (v7 — shared cart engine)
+UI UPDATE (v8 — Harvest Ready combo state)
 - Cards should display "In Harvest" state when quantity > 0 in cart.
 - Quantity shown as "🧺 X added".
 - Card receives class 'in-cart'.
@@ -321,10 +321,27 @@ This package is prepared for integrating those UI hooks.
 
     if (exempt) {
       elements.minimumStatus.textContent =
-        "Your Combo Box qualifies as a complete harvest.";
+        "Your harvest is ready for purchase.";
 
       elements.dockStatus.textContent =
-        "Complete harvest selected ✓";
+        "Harvest ready ✓";
+
+      elements.minimumWeight.textContent =
+        "Complete harvest selected";
+
+      elements.dockWeight.textContent =
+        "Ready for purchase";
+
+      elements.minimumProgress.style.width =
+        "100%";
+
+      elements.dockProgressFill.style.width =
+        "100%";
+
+      if (elements.dockTotal) {
+        elements.dockTotal.textContent =
+          currency(subtotal);
+      }
 
       elements.checkoutButton.classList.remove(
         "disabled"
@@ -554,6 +571,16 @@ This package is prepared for integrating those UI hooks.
         <span class="product-category">
           ${escapeHtml(product.collection || "Harvest")}
         </span>
+
+        ${
+          product.minimumOrderExempt === true
+            ? `
+              <span class="complete-harvest-badge">
+                Complete harvest
+              </span>
+            `
+            : ""
+        }
       </div>
 
       <div class="product-body">
