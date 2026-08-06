@@ -1,3 +1,12 @@
+/*
+MyFarmBox Singapore Products v41
+Loading order:
+1. Browser cache
+2. /data/products.json
+3. Apps Script API
+4. Error only when all sources are unavailable
+*/
+
 (() => {
   "use strict";
 
@@ -39,6 +48,228 @@
     checkoutButton: document.getElementById("checkout-button"),
     renderStatus: document.getElementById("render-status")
   };
+
+  const PRODUCTS_JSON_URL =
+    "/data/products.json";
+
+  const PRODUCT_CACHE_KEY =
+    "mfb_sg_products_cache_v3";
+
+  const PRODUCT_CACHE_MAX_AGE_MS =
+    24 * 60 * 60 * 1000;
+
+  const STATIC_FETCH_TIMEOUT_MS =
+    8000;
+
+  const API_FETCH_TIMEOUT_MS =
+    15000;
+
+  function isValidProductPayload(data) {
+    return Boolean(
+      data &&
+      data.ok !== false &&
+      Array.isArray(data.products) &&
+      data.products.length > 0
+    );
+  }
+
+  function readProductCache() {
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem(
+          PRODUCT_CACHE_KEY
+        ) || "null"
+      );
+
+      if (
+        !cached ||
+        !cached.savedAt ||
+        !isValidProductPayload(
+          cached.data
+        )
+      ) {
+        return null;
+      }
+
+      return cached;
+    } catch (error) {
+      console.warn(
+        "Product cache could not be read:",
+        error
+      );
+
+      return null;
+    }
+  }
+
+  function writeProductCache(data) {
+    if (!isValidProductPayload(data)) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        PRODUCT_CACHE_KEY,
+        JSON.stringify({
+          savedAt: Date.now(),
+          data
+        })
+      );
+    } catch (error) {
+      console.warn(
+        "Product cache could not be saved:",
+        error
+      );
+    }
+  }
+
+  function productPayloadSignature(data) {
+    if (!isValidProductPayload(data)) {
+      return "";
+    }
+
+    return JSON.stringify({
+      generatedAt:
+        data.generatedAt || "",
+      count:
+        data.products.length,
+      products:
+        data.products.map(product => [
+          product.handleId,
+          product.price,
+          product.available,
+          product.stockUnits,
+          product.imageUrl,
+          product.description,
+          product.minimumOrderExempt,
+          product.updatedAt
+        ])
+    });
+  }
+
+  function applyProductData(data) {
+    if (!isValidProductPayload(data)) {
+      throw new Error(
+        "Product catalogue is empty or invalid."
+      );
+    }
+
+    state.products = data.products;
+
+    state.minimumOrderKg = Number(
+      data.settings?.minimumOrderKg ||
+      config.DEFAULT_MINIMUM_ORDER_KG
+    );
+
+    if (
+      typeof cartStore.hydrateFromProducts ===
+      "function"
+    ) {
+      cartStore.hydrateFromProducts(
+        cartStore.read(),
+        state.products
+      );
+    }
+
+    const categories =
+      Array.isArray(data.categories) &&
+      data.categories.length
+        ? data.categories
+        : [
+            ...new Set(
+              state.products
+                .map(product =>
+                  product.collection
+                )
+                .filter(Boolean)
+            )
+          ];
+
+    renderFilters(categories);
+
+    elements.loading.hidden = true;
+    elements.error.hidden = true;
+    elements.grid.hidden = false;
+
+    applyFilters();
+    updateSummary();
+  }
+
+  async function fetchJsonWithTimeout(
+    url,
+    timeoutMs
+  ) {
+    const controller =
+      new AbortController();
+
+    const timeout =
+      window.setTimeout(
+        () => controller.abort(),
+        timeoutMs
+      );
+
+    try {
+      const response = await fetch(
+        url,
+        {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `${url} returned ${response.status}`
+        );
+      }
+
+      const data =
+        await response.json();
+
+      if (!isValidProductPayload(data)) {
+        throw new Error(
+          "Invalid product catalogue response."
+        );
+      }
+
+      return data;
+
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  async function fetchWithRetry(
+    loader,
+    attempts = 2,
+    initialDelayMs = 1200
+  ) {
+    let lastError = null;
+
+    for (
+      let attempt = 1;
+      attempt <= attempts;
+      attempt += 1
+    ) {
+      try {
+        return await loader();
+      } catch (error) {
+        lastError = error;
+
+        if (attempt < attempts) {
+          await new Promise(resolve =>
+            window.setTimeout(
+              resolve,
+              initialDelayMs * attempt
+            )
+          );
+        }
+      }
+    }
+
+    throw lastError;
+  }
 
   function currency(value) {
     return new Intl.NumberFormat("en-SG", {
@@ -525,163 +756,134 @@
   }
 
   async function loadProducts() {
-      const cached = readProductCache();
-    
-      const hasCachedProducts =
-        cached &&
-        cached.data &&
-        Array.isArray(cached.data.products) &&
-        cached.data.products.length > 0;
-    
-      if (hasCachedProducts) {
-        applyProductData(cached.data);
-    
-        elements.summary.textContent =
-          "Refreshing this week’s harvest…";
-      } else {
-        elements.loading.hidden = false;
-        elements.error.hidden = true;
-        elements.empty.hidden = true;
-        elements.grid.hidden = true;
-    
-        elements.summary.textContent =
-          "Loading this week’s harvest…";
-      }
-    
-      let staticData = null;
-    
-      try {
-        const staticResponse = await fetch(
-          `${PRODUCTS_JSON_URL}?v=${Date.now()}`,
-          {
-            method: "GET",
-            cache: "no-store"
-          }
+    const cached =
+      readProductCache();
+
+    if (cached) {
+      applyProductData(
+        cached.data
+      );
+
+      const cacheAge =
+        Date.now() - cached.savedAt;
+
+      elements.summary.textContent =
+        cacheAge <
+        PRODUCT_CACHE_MAX_AGE_MS
+          ? "Showing this week’s harvest"
+          : "Refreshing this week’s harvest…";
+    } else {
+      elements.loading.hidden = false;
+      elements.error.hidden = true;
+      elements.empty.hidden = true;
+      elements.grid.hidden = true;
+
+      elements.summary.textContent =
+        "Loading this week’s harvest…";
+    }
+
+    let staticData = null;
+
+    try {
+      staticData =
+        await fetchWithRetry(
+          () =>
+            fetchJsonWithTimeout(
+              `${PRODUCTS_JSON_URL}?v=${Date.now()}`,
+              STATIC_FETCH_TIMEOUT_MS
+            ),
+          2,
+          1000
         );
-    
-        if (!staticResponse.ok) {
-          throw new Error(
-            `products.json returned ${staticResponse.status}`
-          );
-        }
-    
-        staticData = await staticResponse.json();
-    
-        if (
-          !staticData.ok ||
-          !Array.isArray(staticData.products)
-        ) {
-          throw new Error(
-            "Invalid products.json response"
-          );
-        }
-    
-        writeProductCache(staticData);
-        applyProductData(staticData);
-    
-        elements.summary.textContent =
-          staticData.products.length === 1
-            ? "1 product"
-            : `${staticData.products.length} products`;
-    
-      } catch (staticError) {
-        console.warn(
-          "Static products unavailable:",
-          staticError
+
+      writeProductCache(
+        staticData
+      );
+
+      if (
+        productPayloadSignature(
+          staticData
+        ) !==
+        productPayloadSignature(
+          cached?.data
+        )
+      ) {
+        applyProductData(
+          staticData
         );
       }
-    
+
+    } catch (staticError) {
+      console.warn(
+        "Static product catalogue unavailable:",
+        staticError
+      );
+    }
+
+    const apiUrl =
+      String(config.API_URL || "")
+        .trim();
+
+    if (apiUrl) {
       try {
-        const controller = new AbortController();
-    
-        const timeout = window.setTimeout(
-          () => controller.abort(),
-          15000
+        const apiData =
+          await fetchWithRetry(
+            () =>
+              fetchJsonWithTimeout(
+                `${apiUrl}?action=getProducts`,
+                API_FETCH_TIMEOUT_MS
+              ),
+            2,
+            1600
+          );
+
+        writeProductCache(
+          apiData
         );
-    
-        const apiResponse = await fetch(
-          `${API_URL}?action=getProducts`,
-          {
-            method: "GET",
-            cache: "no-store",
-            signal: controller.signal
-          }
-        );
-    
-        window.clearTimeout(timeout);
-    
-        if (!apiResponse.ok) {
-          throw new Error(
-            `Product API returned ${apiResponse.status}`
+
+        if (
+          productPayloadSignature(
+            apiData
+          ) !==
+          productPayloadSignature(
+            staticData ||
+            cached?.data
+          )
+        ) {
+          applyProductData(
+            apiData
           );
         }
-    
-        const apiData = await apiResponse.json();
-    
-        if (
-          !apiData.ok ||
-          !Array.isArray(apiData.products)
-        ) {
-          throw new Error(
-            apiData.message ||
-            "Invalid product API response"
-          );
-        }
-    
-        writeProductCache(apiData);
-    
-        const staticSignature = staticData
-          ? JSON.stringify({
-              generatedAt:
-                staticData.generatedAt || "",
-              count:
-                staticData.products.length
-            })
-          : "";
-    
-        const apiSignature =
-          JSON.stringify({
-            generatedAt:
-              apiData.generatedAt || "",
-            count:
-              apiData.products.length
-          });
-    
-        if (
-          !staticData ||
-          staticSignature !== apiSignature
-        ) {
-          applyProductData(apiData);
-        }
-    
+
       } catch (apiError) {
         console.warn(
           "Live product API unavailable:",
           apiError
         );
       }
-    
-      const finalProducts =
-        state.products.length > 0;
-    
-      if (!finalProducts) {
-        elements.loading.hidden = true;
-        elements.grid.hidden = true;
-        elements.error.hidden = false;
-        elements.summary.textContent =
-          "Harvest unavailable";
-        return;
-      }
-    
+    }
+
+    if (
+      state.products.length > 0
+    ) {
       elements.loading.hidden = true;
       elements.error.hidden = true;
       elements.grid.hidden = false;
-    
+
       elements.summary.textContent =
         state.products.length === 1
           ? "1 product"
           : `${state.products.length} products`;
+
+      return;
     }
+
+    elements.loading.hidden = true;
+    elements.grid.hidden = true;
+    elements.error.hidden = false;
+    elements.summary.textContent =
+      "Harvest unavailable";
+  }
 
   function clearFilters() {
     state.activeCategory = "all";
