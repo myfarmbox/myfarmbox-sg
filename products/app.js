@@ -1020,61 +1020,163 @@ This package is prepared for integrating those UI hooks.
   }
 
   async function loadProducts() {
-    const cached = readProductCache();
-    const cacheIsFresh =
-      cached &&
-      Date.now() - cached.savedAt <
-        PRODUCT_CACHE_MAX_AGE_MS;
-
-    if (cached) {
-      applyProductData(cached.data);
-
-      elements.summary.textContent =
-        cacheIsFresh
-          ? "Showing this week’s harvest"
-          : "Refreshing this week’s harvest…";
-    } else {
-      elements.loading.hidden = false;
-      elements.error.hidden = true;
-      elements.empty.hidden = true;
-      elements.grid.hidden = true;
-      elements.summary.textContent =
-        "Loading this week’s harvest…";
-    }
-
-    const controller = new AbortController();
-    const timeout = window.setTimeout(
-      () => controller.abort(),
-      12000
-    );
-
-    try {
-      const response = await fetch(
-        `${API_URL}?action=getProducts`,
-        {
-          method: "GET",
-          cache: "no-store",
-          signal: controller.signal
+      const cached = readProductCache();
+    
+      const hasCachedProducts =
+        cached &&
+        cached.data &&
+        Array.isArray(cached.data.products) &&
+        cached.data.products.length > 0;
+    
+      if (hasCachedProducts) {
+        applyProductData(cached.data);
+    
+        elements.summary.textContent =
+          "Refreshing this week’s harvest…";
+      } else {
+        elements.loading.hidden = false;
+        elements.error.hidden = true;
+        elements.empty.hidden = true;
+        elements.grid.hidden = true;
+    
+        elements.summary.textContent =
+          "Loading this week’s harvest…";
+      }
+    
+      let staticData = null;
+    
+      try {
+        const staticResponse = await fetch(
+          `${PRODUCTS_JSON_URL}?v=${Date.now()}`,
+          {
+            method: "GET",
+            cache: "no-store"
+          }
+        );
+    
+        if (!staticResponse.ok) {
+          throw new Error(
+            `products.json returned ${staticResponse.status}`
+          );
         }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Product API returned ${response.status}`
+    
+        staticData = await staticResponse.json();
+    
+        if (
+          !staticData.ok ||
+          !Array.isArray(staticData.products)
+        ) {
+          throw new Error(
+            "Invalid products.json response"
+          );
+        }
+    
+        writeProductCache(staticData);
+        applyProductData(staticData);
+    
+        elements.summary.textContent =
+          staticData.products.length === 1
+            ? "1 product"
+            : `${staticData.products.length} products`;
+    
+      } catch (staticError) {
+        console.warn(
+          "Static products unavailable:",
+          staticError
         );
       }
-
-      const data = await response.json();
-
-      if (
-        !data.ok ||
-        !Array.isArray(data.products)
-      ) {
-        throw new Error(
-          data.message ||
-          "Invalid product response"
+    
+      try {
+        const controller = new AbortController();
+    
+        const timeout = window.setTimeout(
+          () => controller.abort(),
+          15000
+        );
+    
+        const apiResponse = await fetch(
+          `${API_URL}?action=getProducts`,
+          {
+            method: "GET",
+            cache: "no-store",
+            signal: controller.signal
+          }
+        );
+    
+        window.clearTimeout(timeout);
+    
+        if (!apiResponse.ok) {
+          throw new Error(
+            `Product API returned ${apiResponse.status}`
+          );
+        }
+    
+        const apiData = await apiResponse.json();
+    
+        if (
+          !apiData.ok ||
+          !Array.isArray(apiData.products)
+        ) {
+          throw new Error(
+            apiData.message ||
+            "Invalid product API response"
+          );
+        }
+    
+        writeProductCache(apiData);
+    
+        const staticSignature = staticData
+          ? JSON.stringify({
+              generatedAt:
+                staticData.generatedAt || "",
+              count:
+                staticData.products.length
+            })
+          : "";
+    
+        const apiSignature =
+          JSON.stringify({
+            generatedAt:
+              apiData.generatedAt || "",
+            count:
+              apiData.products.length
+          });
+    
+        if (
+          !staticData ||
+          staticSignature !== apiSignature
+        ) {
+          applyProductData(apiData);
+        }
+    
+      } catch (apiError) {
+        console.warn(
+          "Live product API unavailable:",
+          apiError
         );
       }
+    
+      const finalProducts =
+        state.products.length > 0;
+    
+      if (!finalProducts) {
+        elements.loading.hidden = true;
+        elements.grid.hidden = true;
+        elements.error.hidden = false;
+        elements.summary.textContent =
+          "Harvest unavailable";
+        return;
+      }
+    
+      elements.loading.hidden = true;
+      elements.error.hidden = true;
+      elements.grid.hidden = false;
+    
+      elements.summary.textContent =
+        state.products.length === 1
+          ? "1 product"
+          : `${state.products.length} products`;
+    }
 
       writeProductCache(data);
 
