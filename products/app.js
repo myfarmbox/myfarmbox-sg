@@ -1,6 +1,6 @@
 
 /*
-UI UPDATE (v8 — Harvest Ready combo state)
+UI UPDATE (v9 — fast cached product loading)
 - Cards should display "In Harvest" state when quantity > 0 in cart.
 - Quantity shown as "🧺 X added".
 - Card receives class 'in-cart'.
@@ -15,9 +15,11 @@ This package is prepared for integrating those UI hooks.
 
   const CART_STORAGE_KEY = "mfb_sg_cart_v1";
   const DEFAULT_MINIMUM_ORDER_KG = 5;
-  const INITIAL_RENDER_COUNT = 18;
-  const RENDER_BATCH_SIZE = 15;
-  const IMAGE_TIMEOUT_MS = 4500;
+  const INITIAL_RENDER_COUNT = 15;
+  const RENDER_BATCH_SIZE = 9;
+  const IMAGE_TIMEOUT_MS = 3000;
+  const PRODUCT_CACHE_KEY = "mfb_sg_products_cache_v2";
+  const PRODUCT_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
 
   const state = {
     products: [],
@@ -56,6 +58,74 @@ This package is prepared for integrating those UI hooks.
     checkoutButton: document.getElementById("checkout-button"),
     renderStatus: document.getElementById("render-status")
   };
+
+  function readProductCache() {
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem(PRODUCT_CACHE_KEY) || "null"
+      );
+
+      if (
+        !cached ||
+        !cached.savedAt ||
+        !cached.data ||
+        !Array.isArray(cached.data.products)
+      ) {
+        return null;
+      }
+
+      return cached;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeProductCache(data) {
+    try {
+      localStorage.setItem(
+        PRODUCT_CACHE_KEY,
+        JSON.stringify({
+          savedAt: Date.now(),
+          data
+        })
+      );
+    } catch {
+      // Storage may be unavailable or full.
+    }
+  }
+
+  function applyProductData(data) {
+    state.products = data.products;
+    state.minimumOrderKg = Number(
+      data.settings?.minimumOrderKg ||
+      DEFAULT_MINIMUM_ORDER_KG
+    );
+
+    state.products.forEach(product =>
+      getQuantity(product)
+    );
+
+    hydrateCartFromProducts();
+
+    renderFilters(
+      Array.isArray(data.categories)
+        ? data.categories
+        : [
+            ...new Set(
+              data.products.map(
+                product => product.collection
+              )
+            )
+          ]
+    );
+
+    elements.loading.hidden = true;
+    elements.error.hidden = true;
+    elements.grid.hidden = false;
+
+    applyFilters();
+    updateCartSummary();
+  }
 
   function readCart() {
     if (window.MFBCart) {
@@ -536,7 +606,7 @@ This package is prepared for integrating those UI hooks.
     }
   }
 
-  function createProductCard(product) {
+  function createProductCard(product, renderIndex = 0) {
     const name = productDisplayName(product);
     const imageUrl = normalizeImageUrl(product.imageUrl);
     const quantity = getQuantity(product);
@@ -553,8 +623,9 @@ This package is prepared for integrating those UI hooks.
                 class="product-image"
                 src="${escapeHtml(imageUrl)}"
                 alt="${escapeHtml(name.primary)}"
-                loading="lazy"
+                loading="${renderIndex < 6 ? "eager" : "lazy"}"
                 decoding="async"
+                fetchpriority="${renderIndex < 6 ? "high" : "auto"}"
               >`
             : ""
         }
@@ -769,7 +840,10 @@ This package is prepared for integrating those UI hooks.
 
     for (let index = start; index < end; index += 1) {
       fragment.appendChild(
-        createProductCard(state.filteredProducts[index])
+        createProductCard(
+          state.filteredProducts[index],
+          index
+        )
       );
     }
 
@@ -790,60 +864,136 @@ This package is prepared for integrating those UI hooks.
   }
 
   async function loadProducts() {
-    elements.loading.hidden = false;
-    elements.error.hidden = true;
-    elements.empty.hidden = true;
-    elements.grid.hidden = true;
-    elements.summary.textContent = "Loading this week’s harvest…";
+    const cached = readProductCache();
+    const cacheIsFresh =
+      cached &&
+      Date.now() - cached.savedAt <
+        PRODUCT_CACHE_MAX_AGE_MS;
+
+    if (cached) {
+      applyProductData(cached.data);
+
+      elements.summary.textContent =
+        cacheIsFresh
+          ? "Showing this week’s harvest"
+          : "Refreshing this week’s harvest…";
+    } else {
+      elements.loading.hidden = false;
+      elements.error.hidden = true;
+      elements.empty.hidden = true;
+      elements.grid.hidden = true;
+      elements.summary.textContent =
+        "Loading this week’s harvest…";
+    }
 
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    const timeout = window.setTimeout(
+      () => controller.abort(),
+      12000
+    );
 
     try {
-      const response = await fetch(`${API_URL}?action=getProducts`, {
-        method: "GET",
-        cache: "no-store",
-        signal: controller.signal
-      });
+      const response = await fetch(
+        `${API_URL}?action=getProducts`,
+        {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Product API returned ${response.status}`);
+        throw new Error(
+          `Product API returned ${response.status}`
+        );
       }
 
       const data = await response.json();
 
-      if (!data.ok || !Array.isArray(data.products)) {
-        throw new Error(data.message || "Invalid product response");
+      if (
+        !data.ok ||
+        !Array.isArray(data.products)
+      ) {
+        throw new Error(
+          data.message ||
+          "Invalid product response"
+        );
       }
 
-      state.products = data.products;
-      state.minimumOrderKg = Number(
-        data.settings?.minimumOrderKg || DEFAULT_MINIMUM_ORDER_KG
-      );
+      writeProductCache(data);
 
-      state.products.forEach(product => getQuantity(product));
+      const cachedSignature = cached
+        ? JSON.stringify({
+            generatedAt:
+              cached.data.generatedAt || "",
+            count:
+              cached.data.count ||
+              cached.data.products.length,
+            products:
+              cached.data.products.map(product => [
+                product.handleId,
+                product.price,
+                product.available,
+                product.stockUnits,
+                product.imageUrl,
+                product.description,
+                product.minimumOrderExempt,
+                product.updatedAt
+              ])
+          })
+        : "";
 
-      hydrateCartFromProducts();
+      const liveSignature = JSON.stringify({
+        generatedAt:
+          data.generatedAt || "",
+        count:
+          data.count ||
+          data.products.length,
+        products:
+          data.products.map(product => [
+            product.handleId,
+            product.price,
+            product.available,
+            product.stockUnits,
+            product.imageUrl,
+            product.description,
+            product.minimumOrderExempt,
+            product.updatedAt
+          ])
+      });
 
-      renderFilters(
-        Array.isArray(data.categories)
-          ? data.categories
-          : [...new Set(data.products.map(product => product.collection))]
-      );
+      if (
+        !cached ||
+        cachedSignature !== liveSignature
+      ) {
+        applyProductData(data);
+      } else {
+        elements.summary.textContent =
+          data.count === 1
+            ? "1 product"
+            : `${data.count} products`;
 
-      elements.loading.hidden = true;
-      elements.grid.hidden = false;
-
-      applyFilters();
-      updateCartSummary();
+        updateCartSummary();
+      }
     } catch (error) {
-      console.error("Unable to load products:", error);
-      elements.loading.hidden = true;
-      elements.grid.hidden = true;
-      elements.error.hidden = false;
-      elements.summary.textContent = "Harvest unavailable";
+      console.error(
+        "Unable to refresh products:",
+        error
+      );
+
+      if (!cached) {
+        elements.loading.hidden = true;
+        elements.grid.hidden = true;
+        elements.error.hidden = false;
+        elements.summary.textContent =
+          "Harvest unavailable";
+      } else {
+        elements.error.hidden = true;
+        elements.summary.textContent =
+          `${state.filteredProducts.length} products`;
+      }
     } finally {
-      clearTimeout(timeout);
+      window.clearTimeout(timeout);
     }
   }
 
