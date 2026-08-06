@@ -560,9 +560,6 @@ This package is prepared for integrating those UI hooks.
     card.querySelector("[data-quantity-value]").textContent = String(quantity);
     card.querySelector("[data-quantity-minus]").disabled = quantity <= min;
     card.querySelector("[data-quantity-plus]").disabled = quantity >= max;
-    card.querySelector("[data-product-total]").textContent =
-      `${totalPhysicalQuantity(product, quantity)} · ` +
-      `${currency(Number(product.price || 0) * quantity)}`;
   }
 
   function initialiseImage(card, imageUrl) {
@@ -655,10 +652,23 @@ This package is prepared for integrating those UI hooks.
       </div>
 
       <div class="product-body">
-        <h2 class="product-title">${escapeHtml(name.primary)}</h2>
-        <p class="product-native">${escapeHtml(name.native)}</p>
-
-        <span class="product-unit">${escapeHtml(product.unitLabel)}</span>
+        <h2 class="product-title">
+            ${escapeHtml(name.primary)}
+          </h2>
+          
+          ${
+            product.description
+              ? `
+                <p class="product-description">
+                  ${escapeHtml(product.description)}
+                </p>
+              `
+              : ""
+          }
+          
+          <span class="product-unit">
+            ${escapeHtml(product.unitLabel)}
+          </span>
         <strong class="product-price">${currency(product.price)}</strong>
 
         <div class="product-controls">
@@ -671,7 +681,6 @@ This package is prepared for integrating those UI hooks.
           <button class="add-button" type="button" data-add-to-cart>Add</button>
         </div>
 
-        <p class="product-total" data-product-total></p>
       </div>
     `;
 
