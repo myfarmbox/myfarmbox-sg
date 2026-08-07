@@ -19,7 +19,7 @@
   "products": [
     {
       "handleId": "Product-992",
-      "name": "Combo Box - Large (16KGs)",
+      "name": "Combo Box - Large (12 - 19KGs)",
       "tanglish": "Compo Box",
       "collection": "Combo Box",
       "imageUrl": "assets/products/combo-large.webp",
@@ -39,7 +39,7 @@
     },
     {
       "handleId": "Product-991",
-      "name": "Combo Box - Medium (9KGs)",
+      "name": "Combo Box - Medium (8 - 12KGs)",
       "tanglish": "Compo Box",
       "collection": "Combo Box",
       "imageUrl": "assets/products/combo-medium.webp",
@@ -59,7 +59,7 @@
     },
     {
       "handleId": "Product-990",
-      "name": "Combo Box - Small (5KGs)",
+      "name": "Combo Box - Small (5 - 7KGs)",
       "tanglish": "Compo Box",
       "collection": "Combo Box",
       "imageUrl": "assets/products/combo-small.webp",
@@ -1038,5 +1038,5 @@
       "updatedAt": ""
     }
   ],
-  "generatedAt": "2026-08-07T10:23:39.959Z"
+  "generatedAt": "2026-08-07T10:30:31.389Z"
 }
