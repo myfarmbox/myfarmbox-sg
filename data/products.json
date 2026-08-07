@@ -28,7 +28,7 @@
       "unitValue": 1,
       "unitType": "box",
       "unitLabel": "1 box",
-      "price": 228.5,
+      "price": 194,
       "currency": "SGD",
       "available": true,
       "stockUnits": 50,
@@ -48,7 +48,7 @@
       "unitValue": 1,
       "unitType": "box",
       "unitLabel": "1 box",
-      "price": 159,
+      "price": 126,
       "currency": "SGD",
       "available": true,
       "stockUnits": 50,
@@ -68,7 +68,7 @@
       "unitValue": 1,
       "unitType": "box",
       "unitLabel": "1 box",
-      "price": 90,
+      "price": 78.5,
       "currency": "SGD",
       "available": true,
       "stockUnits": 50,
@@ -1038,5 +1038,5 @@
       "updatedAt": ""
     }
   ],
-  "generatedAt": "2026-08-07T15:38:38.678Z"
+  "generatedAt": "2026-08-07T15:47:04.798Z"
 }
