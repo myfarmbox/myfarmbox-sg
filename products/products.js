@@ -353,9 +353,7 @@ Loading order:
     const remaining = Math.max(0, minimumKg - weightKg);
     const hasExemptProduct = cart.some(
       item =>
-        isMinimumOrderExempt(
-          item.minimumOrderExempt
-        ) &&
+        item.minimumOrderExempt === true &&
         Number(item.quantity || 0) > 0
     );
 
@@ -600,11 +598,7 @@ Loading order:
   }
 
   function setProductQuantity(product, quantity) {
-    product.minimumOrderExempt =
-      isMinimumOrderExempt(
-        product.minimumOrderExempt
-      );
-    cartStore.setProduct(product, quantity);
+  cartStore.setProduct(product, quantity);
     refreshCard(product);
     updateSummary();
 
