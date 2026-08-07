@@ -186,9 +186,9 @@
       "description": "Firm, filling bananas for steaming, snacks and traditional preparations.",
       "minimumOrderExempt": false,
       "unitValue": 500,
-      "unitType": "kg",
-      "unitLabel": "500 kg",
-      "price": 7000,
+      "unitType": "g",
+      "unitLabel": "500 g",
+      "price": 7,
       "currency": "SGD",
       "available": true,
       "stockUnits": 50,
@@ -1038,5 +1038,5 @@
       "updatedAt": ""
     }
   ],
-  "generatedAt": "2026-08-07T14:08:42.986Z"
+  "generatedAt": "2026-08-07T14:23:36.679Z"
 }
