@@ -22,7 +22,7 @@
       "name": "Combo Box - Large (16KGs)",
       "tanglish": "Compo Box",
       "collection": "Combo Box",
-      "imageUrl": "",
+      "imageUrl": "assets/products/combo-large.webp",
       "description": "",
       "minimumOrderExempt": true,
       "unitValue": 1,
@@ -42,7 +42,7 @@
       "name": "Combo Box - Medium (9KGs)",
       "tanglish": "Compo Box",
       "collection": "Combo Box",
-      "imageUrl": "",
+      "imageUrl": "assets/products/combo-medium.webp",
       "description": "",
       "minimumOrderExempt": true,
       "unitValue": 1,
@@ -62,7 +62,7 @@
       "name": "Combo Box - Small (5KGs)",
       "tanglish": "Compo Box",
       "collection": "Combo Box",
-      "imageUrl": "",
+      "imageUrl": "assets/products/combo-small.webp",
       "description": "",
       "minimumOrderExempt": true,
       "unitValue": 1,
@@ -1038,5 +1038,5 @@
       "updatedAt": ""
     }
   ],
-  "generatedAt": "2026-08-07T09:43:17.096Z"
+  "generatedAt": "2026-08-07T09:43:40.907Z"
 }
