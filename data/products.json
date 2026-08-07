@@ -422,7 +422,7 @@
       "name": "Rock Bee Honey",
       "tanglish": "Puttur Then",
       "collection": "Sweeteners",
-      "imageUrl": "",
+      "imageUrl": "assets/products/honey-rock.webp",
       "description": "Bold, wild honey with deep flavour for everyday natural sweetness.",
       "minimumOrderExempt": false,
       "unitValue": 500,
@@ -722,7 +722,7 @@
       "name": "Green Peas",
       "tanglish": "Pachai Pattani",
       "collection": "Veggie",
-      "imageUrl": "",
+      "imageUrl": "assets/products/green-peas.webp",
       "description": "Naturally sweet peas for pulao, curries, cutlets and stir-fries.",
       "minimumOrderExempt": false,
       "unitValue": 120,
@@ -942,7 +942,7 @@
       "name": "Sweet Potato",
       "tanglish": "Sarkaraivalli Kizhangu",
       "collection": "Veggie",
-      "imageUrl": "",
+      "imageUrl": "assets/products/sweet-potato.webp",
       "description": "Naturally sweet root for roasting, steaming, curries and wholesome snacks.",
       "minimumOrderExempt": false,
       "unitValue": 500,
@@ -1038,5 +1038,5 @@
       "updatedAt": ""
     }
   ],
-  "generatedAt": "2026-08-07T08:53:43.210Z"
+  "generatedAt": "2026-08-07T09:08:38.577Z"
 }
