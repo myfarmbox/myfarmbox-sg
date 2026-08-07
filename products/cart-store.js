@@ -109,11 +109,17 @@
       unitValue: Number(product.unitValue),
       unitType: product.unitType,
       unitPrice: Number(product.price),
+    
+      minimumOrderExempt:
+        String(product.minimumOrderExempt)
+          .trim()
+          .toLowerCase() === "true",
+    
       quantity,
       minQuantity: Number(product.minQuantity || 1),
       maxQuantity: max,
       incrementBy: Number(product.incrementBy || 1)
-    };
+    };;
 
     if (index >= 0) {
       cart[index] = item;
