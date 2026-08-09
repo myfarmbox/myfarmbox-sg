@@ -1,7 +1,7 @@
 const CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbyjQEITL5yb5URDIM3lYtjprZNy0YEpqmEuFNlidbjDdVNoQCuDvGsbau4WzMRUu4Oonw/exec",
-  SINGAPORE_PHONE_DISPLAY: "+65 8575 6146",
-  SINGAPORE_PHONE_KEY: "6585756146",
+  SINGAPORE_PHONE_DISPLAY: "+65 8958 2110",
+  SINGAPORE_PHONE_KEY: "6589582110",
   DEFAULT_MAP: {
     latitude: 1.3521,
     longitude: 103.8198,
