@@ -524,7 +524,7 @@ Loading order:
         ${
           imageUrl
             ? `<img
-                cclass="product-image"
+              class="product-image"
                 src="${escapeHtml(imageUrl)}"
                 alt="${escapeHtml(name.primary)}"
                 loading="${renderIndex < 8 ? "eager" : "lazy"}"
@@ -764,6 +764,7 @@ Loading order:
         index
       )
     );
+    }
 
     elements.grid.appendChild(fragment);
     state.renderedCount = end;
@@ -952,9 +953,7 @@ Loading order:
 
     const hasExemptProduct = cart.some(
       item =>
-        isMinimumOrderExempt(
-          item.minimumOrderExempt
-        ) &&
+        item.minimumOrderExempt === true &&
         Number(item.quantity || 0) > 0
     );
 
