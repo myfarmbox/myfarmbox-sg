@@ -410,46 +410,69 @@ Loading order:
   }
 
   function initialiseImage(card, imageUrl) {
-    const image = card.querySelector(".product-image");
-    const loading = card.querySelector(".image-loading");
-    const placeholder = card.querySelector(".product-placeholder");
+  const image =
+    card.querySelector(".product-image");
 
-    if (!image || !imageUrl) {
-      if (loading) loading.hidden = true;
-      if (placeholder) placeholder.hidden = false;
-      return;
-    }
+  const loading =
+    card.querySelector(".image-loading");
 
-    let settled = false;
+  const placeholder =
+    card.querySelector(".product-placeholder");
 
-    const settle = showImage => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-
-      loading.hidden = true;
-
-      if (showImage) {
-        placeholder.hidden = true;
-        image.classList.add("loaded");
-      } else {
-        image.hidden = true;
-        placeholder.hidden = false;
-      }
-    };
-
-    const timer = window.setTimeout(
-      () => settle(false),
-      config.IMAGE_TIMEOUT_MS
-    );
-
-    image.addEventListener("load", () => settle(true), { once: true });
-    image.addEventListener("error", () => settle(false), { once: true });
-
-    if (image.complete) {
-      settle(image.naturalWidth > 0);
-    }
+  if (!image || !imageUrl) {
+    if (loading) loading.hidden = true;
+    if (placeholder) placeholder.hidden = false;
+    return;
   }
+
+  const showImage = () => {
+    if (loading) {
+      loading.hidden = true;
+    }
+
+    if (placeholder) {
+      placeholder.hidden = true;
+    }
+
+    image.hidden = false;
+    image.classList.add("loaded");
+  };
+
+  const showFallback = () => {
+    if (loading) {
+      loading.hidden = true;
+    }
+
+    image.hidden = true;
+
+    if (placeholder) {
+      placeholder.hidden = false;
+    }
+  };
+
+  image.addEventListener(
+    "load",
+    showImage,
+    { once: true }
+  );
+
+  image.addEventListener(
+    "error",
+    showFallback,
+    { once: true }
+  );
+
+  /*
+   * Handles images already available from
+   * the browser cache.
+   */
+  if (
+    image.complete &&
+    image.naturalWidth > 0
+  ) {
+    showImage();
+  }
+}
 
   function createControl(product, quantity) {
     if (quantity <= 0) {
@@ -484,7 +507,7 @@ Loading order:
     `;
   }
 
-  function createCard(product) {
+  function createCard(product, renderIndex = 0) {
     const name = displayName(product);
     const imageUrl = normalizeImageUrl(product.imageUrl);
     const quantity = cartStore.quantity(product.handleId);
@@ -501,10 +524,11 @@ Loading order:
         ${
           imageUrl
             ? `<img
-                class="product-image"
+                cclass="product-image"
                 src="${escapeHtml(imageUrl)}"
                 alt="${escapeHtml(name.primary)}"
-                loading="lazy"
+                loading="${renderIndex < 8 ? "eager" : "lazy"}"
+                fetchpriority="${renderIndex < 4 ? "high" : "auto"}"
                 decoding="async"
               >`
             : ""
@@ -735,9 +759,11 @@ Loading order:
 
     for (let index = start; index < end; index += 1) {
       fragment.appendChild(
-        createCard(state.filteredProducts[index])
-      );
-    }
+      createCard(
+        state.filteredProducts[index],
+        index
+      )
+    );
 
     elements.grid.appendChild(fragment);
     state.renderedCount = end;
