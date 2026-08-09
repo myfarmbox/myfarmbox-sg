@@ -9,7 +9,7 @@
   --mfb-text: #173f28;
   --mfb-muted: #68766c;
   --mfb-line: rgba(24, 51, 35, 0.12);
-  --mfb-border: transparent;
+  --mfb-border: #414141;
   --mfb-radius-xs: 8px;
   --mfb-radius-sm: 12px;
   --mfb-radius: 18px;
@@ -355,14 +355,43 @@ textarea::placeholder { color: #98a39a; }
 
 .header-cta {
   min-height: 44px;
-  padding: 11px 18px;
+  padding: 11px 20px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+
+  border: 1px solid transparent;
+  outline: none;
   border-radius: var(--mfb-radius-sm);
+
   background: var(--mfb-green);
   color: var(--mfb-white);
+
   font-size: 13px;
   font-weight: 700;
+  line-height: 1;
+
+  box-shadow: 0 6px 18px rgba(67, 141, 53, 0.14);
+
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.header-cta:hover {
+  border-color: transparent;
+  background: var(--mfb-green-dark);
+  color: var(--mfb-white);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(36, 91, 43, 0.18);
+}
+
+.header-cta:focus,
+.header-cta:focus-visible {
+  outline: none;
+  border-color: transparent;
+  box-shadow:
+    0 6px 18px rgba(67, 141, 53, 0.14),
+    0 0 0 3px rgba(67, 141, 53, 0.14);
 }
 
 .header-cta:hover {
