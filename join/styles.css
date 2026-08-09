@@ -237,6 +237,7 @@ dialog button{border:0;background:var(--forest);color:white;padding:12px 24px;bo
   .budget-options{grid-template-columns:1fr}
   .form-navigation{grid-template-columns:auto 1fr auto}
   .form-message{grid-row:2;grid-column:1/-1}
+}
 
 /* v1.5: compact cooking rhythm */
 .cooking-options{
