@@ -9,7 +9,7 @@
   --mfb-text: #173f28;
   --mfb-muted: #68766c;
   --mfb-line: rgba(24, 51, 35, 0.12);
-  --mfb-border: #e7e9e3;
+  --mfb-border: transparent;
   --mfb-radius-xs: 8px;
   --mfb-radius-sm: 12px;
   --mfb-radius: 18px;
