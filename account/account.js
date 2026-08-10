@@ -1105,7 +1105,7 @@
   function prepareSupportLinks() {
     const phone =
       account.settings?.supportPhone ||
-      "+65 8575 6146";
+      "+65 8958 2110";
 
     const digits = phone.replace(/\D/g, "");
 
