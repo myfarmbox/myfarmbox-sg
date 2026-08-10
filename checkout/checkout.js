@@ -224,6 +224,23 @@
     }, 2400);
   }
 
+  function focusConfirmation(input) {
+    if (!input) return;
+
+    const card = input.closest(".confirmation-card");
+
+    card?.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    card?.classList.add("needs-attention");
+
+    window.setTimeout(() => {
+      card?.classList.remove("needs-attention");
+    }, 1400);
+  }
+
   function unlockStep(number) {
     const card = document.querySelector(
       `[data-step-card="${number}"]`
@@ -658,7 +675,29 @@
   async function placeOrder() {
     updateCheckoutState();
 
-    if (!formIsValid() || state.submitting) {
+    if (state.submitting) {
+      return;
+    }
+
+    if (!els.detailsConfirmed.checked) {
+      showToast(
+        "Confirm your details",
+        "Please check and confirm your profile and delivery address."
+      );
+      focusConfirmation(els.detailsConfirmed);
+      return;
+    }
+
+    if (!els.termsConfirmed.checked) {
+      showToast(
+        "One final confirmation",
+        "Please confirm your harvest details before placing the order."
+      );
+      focusConfirmation(els.termsConfirmed);
+      return;
+    }
+
+    if (!formIsValid()) {
       return;
     }
 
