@@ -12,6 +12,7 @@
     cart: [],
     settings: {
       minimumOrderKg: 5,
+      maximumOrderKg: 20,
       deliveryFee: 0
     },
     delivery: null,
@@ -87,32 +88,51 @@
     }).format(Number(value || 0));
   }
 
-  function unitWeightKg(item) {
+  function unitEquivalentKg(item) {
     const value = Number(item.unitValue || 0);
-    const unit = String(item.unitType || "").toLowerCase();
+    const unit = String(item.unitType || "")
+      .trim()
+      .toLowerCase();
 
     if (unit === "kg") return value;
     if (unit === "g") return value / 1000;
+    if (unit === "ml") return value / 1000;
+
+    if (
+      unit === "l" ||
+      unit === "ltr" ||
+      unit === "litre" ||
+      unit === "liter"
+    ) {
+      return value;
+    }
+
     return 0;
   }
 
   function totals(cart) {
+    const minimumKg = Number(
+      state.settings.minimumOrderKg || 5
+    );
+
+    const maximumKg = Number(
+      state.settings.maximumOrderKg || 20
+    );
+
     if (window.MFBCart) {
       return window.MFBCart.summarize(
         cart,
         {
-          minimumKg:
-            Number(
-              state.settings.minimumOrderKg || 5
-            )
+          minimumKg,
+          maximumKg
         }
       );
     }
 
-    const weight = cart.reduce(
+    const equivalentKg = cart.reduce(
       (sum, item) =>
         sum +
-        unitWeightKg(item) *
+        unitEquivalentKg(item) *
         Number(item.quantity || 0),
       0
     );
@@ -131,26 +151,40 @@
 
     const hasExemptProduct = cart.some(
       item =>
-        item.minimumOrderExempt === true &&
+        (
+          item.minimumOrderExempt === true ||
+          String(item.minimumOrderExempt)
+            .trim()
+            .toLowerCase() === "true"
+        ) &&
         Number(item.quantity || 0) > 0
     );
 
-    const minimumKg =
-      Number(
-        state.settings.minimumOrderKg || 5
-      );
+    const minimumReached =
+      equivalentKg >= minimumKg;
+
+    const withinMaximum =
+      equivalentKg <= maximumKg;
 
     return {
-      weight,
-      weightKg: weight,
+      weight: equivalentKg,
+      weightKg: equivalentKg,
+      equivalentKg,
       subtotal,
       minimumKg,
+      maximumKg,
       remainingKg:
-        Math.max(0, minimumKg - weight),
+        Math.max(0, minimumKg - equivalentKg),
+      remainingMinimumKg:
+        Math.max(0, minimumKg - equivalentKg),
+      remainingMaximumKg:
+        Math.max(0, maximumKg - equivalentKg),
+      minimumReached,
+      withinMaximum,
       hasExemptProduct,
       qualified:
-        weight >= minimumKg ||
-        hasExemptProduct
+        (minimumReached || hasExemptProduct) &&
+        withinMaximum
     };
   }
 
@@ -230,10 +264,11 @@
 
     els.summaryWeight.textContent =
       `${Number(
+        summary.equivalentKg ??
         summary.weightKg ??
         summary.weight ??
         0
-      ).toFixed(2)} kg`;
+      ).toFixed(2)} kg eq.`;
     els.summarySubtotal.textContent = currency(summary.subtotal);
     els.summaryDeliveryFee.textContent =
       deliveryFee > 0 ? currency(deliveryFee) : "FREE";
@@ -268,12 +303,15 @@
       els.addressLine.value.trim() &&
       /^\d{6}$/.test(els.postalCode.value.trim());
 
+    const summary = totals(state.cart);
+
     return Boolean(
       state.lookupComplete &&
       fieldsValid &&
       els.detailsConfirmed.checked &&
       els.termsConfirmed.checked &&
-      state.cart.length
+      state.cart.length &&
+      summary.qualified
     );
   }
 
@@ -282,7 +320,26 @@
 
     els.placeOrder.disabled = !valid || state.submitting;
 
-    if (!state.lookupComplete) {
+    const summary = totals(state.cart);
+
+    if (!summary.withinMaximum) {
+      els.warning.textContent =
+        `Your harvest exceeds the ${Number(
+          summary.maximumKg || 20
+        ).toFixed(0)} kg equivalent maximum. Please return to your cart and reduce the order.`;
+      els.warning.className = "checkout-warning error";
+    } else if (
+      !summary.minimumReached &&
+      !summary.hasExemptProduct
+    ) {
+      els.warning.textContent =
+        `Add ${Number(
+          summary.remainingMinimumKg ??
+          summary.remainingKg ??
+          0
+        ).toFixed(2)} kg equivalent to reach the minimum harvest.`;
+      els.warning.className = "checkout-warning error";
+    } else if (!state.lookupComplete) {
       els.warning.textContent = "Find your profile to continue.";
       els.warning.className = "checkout-warning";
     } else if (!els.detailsConfirmed.checked) {
@@ -452,7 +509,10 @@
         unitType: live.unitType,
         unitPrice: Number(live.price),
         minimumOrderExempt:
-          Boolean(live.minimumOrderExempt),
+          live.minimumOrderExempt === true ||
+          String(live.minimumOrderExempt)
+            .trim()
+            .toLowerCase() === "true",
         minQuantity:
           Number(live.minQuantity || 1),
         maxQuantity: max
@@ -470,17 +530,36 @@
     state.settings = {
       minimumOrderKg:
         Number(data.settings?.minimumOrderKg || 5),
+      maximumOrderKg:
+        Number(
+          data.settings?.maximumOrderKg ||
+          window.MFBCart?.maximumOrderEquivalentKg ||
+          20
+        ),
       deliveryFee:
         Number(data.settings?.deliveryFee || 0)
     };
 
     const summary = totals(refreshed);
 
-    if (!summary.qualified) {
+    if (!summary.withinMaximum) {
+      throw new Error(
+        `Your harvest exceeds the ${Number(
+          summary.maximumKg || 20
+        ).toFixed(0)} kg equivalent maximum. Please return to your cart and reduce the order.`
+      );
+    }
+
+    if (
+      !summary.minimumReached &&
+      !summary.hasExemptProduct
+    ) {
       throw new Error(
         `Add ${Number(
-          summary.remainingKg || 0
-        ).toFixed(2)} kg more, or choose a qualifying Combo Box.`
+          summary.remainingMinimumKg ??
+          summary.remainingKg ??
+          0
+        ).toFixed(2)} kg equivalent more, or choose a qualifying Combo Box.`
       );
     }
 
@@ -548,14 +627,28 @@
       clientSummary: {
         weightKg:
           Number(
+            summary.equivalentKg ??
             summary.weightKg ??
             summary.weight ??
             0
           ),
+        equivalentKg:
+          Number(
+            summary.equivalentKg ??
+            summary.weightKg ??
+            summary.weight ??
+            0
+          ),
+        minimumKg:
+          Number(summary.minimumKg || 5),
+        maximumKg:
+          Number(summary.maximumKg || 20),
         subtotal:
           Number(summary.subtotal || 0),
         qualified:
           Boolean(summary.qualified),
+        withinMaximum:
+          Boolean(summary.withinMaximum),
         hasExemptProduct:
           Boolean(summary.hasExemptProduct)
       }
