@@ -63,6 +63,7 @@ Order rules:
 
   let deliveryFee = 0;
   let productMap = new Map();
+  let catalogueVerified = false;
 
   const readCart = () => {
     if (
@@ -573,14 +574,52 @@ Order rules:
     } ${unit}`.trim();
   }
 
+  function normalizeProductId(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function findLiveProduct(productId) {
+    if (!catalogueVerified) {
+      return null;
+    }
+
+    const exact = productMap.get(productId);
+
+    if (exact) {
+      return exact;
+    }
+
+    const normalized =
+      normalizeProductId(productId);
+
+    for (const [id, product] of productMap) {
+      if (normalizeProductId(id) === normalized) {
+        return product;
+      }
+    }
+
+    return null;
+  }
+
+  function isProductUnavailable(productId) {
+    return (
+      catalogueVerified &&
+      !findLiveProduct(productId)
+    );
+  }
+
   function itemNode(item) {
     const live =
-      productMap.get(
+      findLiveProduct(
         item.productId
       );
 
     const available =
-      Boolean(live);
+      !isProductUnavailable(
+        item.productId
+      );
 
     const article =
       document.createElement(
@@ -849,7 +888,7 @@ Order rules:
       cart[index];
 
     const live =
-      productMap.get(id);
+      findLiveProduct(id);
 
     const min =
       Number(
@@ -1010,7 +1049,7 @@ Order rules:
     const unavailable =
       cart.some(
         item =>
-          !productMap.has(
+          isProductUnavailable(
             item.productId
           )
       );
@@ -1160,7 +1199,9 @@ Order rules:
       new Map(
         products.map(
           product => [
-            product.handleId,
+            normalizeProductId(
+              product.handleId
+            ),
             product
           ]
         )
@@ -1170,7 +1211,9 @@ Order rules:
       item => {
         const product =
           map.get(
-            item.productId
+            normalizeProductId(
+              item.productId
+            )
           );
 
         if (!product) {
@@ -1290,7 +1333,15 @@ Order rules:
         );
 
       const products =
-        data.products || [];
+        Array.isArray(data.products)
+          ? data.products
+          : [];
+
+      if (!products.length) {
+        throw new Error(
+          "Product catalogue returned no products."
+        );
+      }
 
       productMap =
         new Map(
@@ -1301,6 +1352,8 @@ Order rules:
             ]
           )
         );
+
+      catalogueVerified = true;
 
       const refreshed =
         hydrateCartFromProducts(
@@ -1313,6 +1366,8 @@ Order rules:
       );
 
     } catch (error) {
+      catalogueVerified = false;
+
       console.error(
         "Cart product refresh failed:",
         error
@@ -1370,7 +1425,7 @@ Order rules:
       const unavailable =
         cart.some(
           item =>
-            !productMap.has(
+            isProductUnavailable(
               item.productId
             )
         );
