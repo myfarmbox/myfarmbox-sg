@@ -17,7 +17,7 @@
   <link rel="manifest" href="/site.webmanifest">
 
   <link rel="stylesheet" href="/shared.css?v=22">
-  <link rel="stylesheet" href="styles.css?v=50">
+  <link rel="stylesheet" href="styles.css?v=51">
 </head>
 <body>
   <div id="site-header"></div>
@@ -26,8 +26,8 @@
     <header class="page-heading">
       <div>
         <p class="eyebrow">Confirm Harvest</p>
-        <h1>Review and confirm your harvest.</h1>
-        <p class="lead">Check your details, delivery and payment preference. It only takes a moment.</p>
+        <h1>One final step before we plan your delivery.</h1>
+        <p class="lead">Verify your profile, delivery address and payment preference.</p>
       </div>
 
       <a href="/cart/" class="back-link">← Back to My Harvest</a>
@@ -44,7 +44,7 @@
     <section id="empty-state" class="empty-state" hidden>
       <span aria-hidden="true">🌿</span>
       <h2>Your harvest is not ready yet.</h2>
-      <p id="empty-message">Please return to your basket and complete the 5 kg equivalent minimum.</p>
+      <p id="empty-message">Please return to your basket and complete the 5 kg minimum.</p>
       <a href="/cart/">Review My Harvest →</a>
     </section>
 
@@ -150,14 +150,10 @@
             <input id="lat-long" name="latLong" type="hidden">
             <input id="source-waitlist-id" name="sourceWaitlistId" type="hidden">
 
-            <div class="confirmation-choice confirmation-card">
-              <label for="details-confirmed">
+            <div class="confirmation-choice">
+              <label>
                 <input id="details-confirmed" type="checkbox">
-                <span class="confirmation-box" aria-hidden="true"></span>
-                <span class="confirmation-copy">
-                  <strong>Confirm my details</strong>
-                  <small>I’ve checked my name, contact number and delivery address.</small>
-                </span>
+                <span>I have checked and confirmed these details.</span>
               </label>
             </div>
           </form>
@@ -204,16 +200,12 @@
             </div>
           </div>
 
-          <div class="terms-confirmation confirmation-card">
-            <label for="terms-confirmed">
-              <input id="terms-confirmed" type="checkbox">
-              <span class="confirmation-box" aria-hidden="true"></span>
-              <span class="confirmation-copy">
-                <strong>Ready to place my harvest</strong>
-                <small>I’ve checked my order and understand that fresh produce availability may vary slightly with the harvest.</small>
-              </span>
-            </label>
-          </div>
+          <label class="terms-row">
+            <input id="terms-confirmed" type="checkbox">
+            <span>
+              I confirm the order details and understand that fresh produce availability may vary slightly with the harvest.
+            </span>
+          </label>
         </section>
       </div>
 
@@ -227,7 +219,7 @@
 
           <div class="summary-row">
             <span>Harvest weight</span>
-            <strong id="summary-weight">0.00 kg eq.</strong>
+            <strong id="summary-weight">0.00 kg</strong>
           </div>
 
           <div class="summary-row">
@@ -261,12 +253,25 @@
           </button>
 
           <p class="summary-note">
-            No payment is taken at this step. We’ll confirm your harvest and share payment details separately.
+            Your order is written to the MyFarmBox Singapore order system only after you confirm.
           </p>
         </div>
       </aside>
     </section>
   </main>
+
+
+  <div id="confirming-overlay" class="confirming-overlay" hidden>
+    <div class="confirming-card" role="status" aria-live="polite" aria-busy="true">
+      <div class="confirming-spinner" aria-hidden="true"></div>
+      <p class="eyebrow">Almost there</p>
+      <h2>Confirming your harvest…</h2>
+      <p>
+        We’re checking your order, delivery details and current availability.
+      </p>
+      <small>Please keep this page open for a moment.</small>
+    </div>
+  </div>
 
   <dialog id="success-dialog" class="success-dialog">
     <div class="success-mark">✓</div>
@@ -304,6 +309,6 @@
 
   <script src="/shared.js?v=22"></script>
   <script src="/cart-engine.js?v=49"></script>
-  <script src="checkout.js?v=50"></script>
+  <script src="checkout.js?v=51"></script>
 </body>
 </html>

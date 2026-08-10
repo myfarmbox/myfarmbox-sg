@@ -64,7 +64,8 @@
     closeSuccess: $("close-success-button"),
     toast: $("toast"),
     toastTitle: $("toast-title"),
-    toastCopy: $("toast-copy")
+    toastCopy: $("toast-copy"),
+    confirmingOverlay: $("confirming-overlay")
   };
 
   function readJson(key, fallback) {
@@ -224,21 +225,24 @@
     }, 2400);
   }
 
-  function focusConfirmation(input) {
-    if (!input) return;
+  function showConfirmingOverlay() {
+    if (!els.confirmingOverlay) return;
 
-    const card = input.closest(".confirmation-card");
+    els.confirmingOverlay.hidden = false;
+    document.body.classList.add("checkout-submitting");
+  }
 
-    card?.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+  function hideConfirmingOverlay() {
+    if (!els.confirmingOverlay) return;
 
-    card?.classList.add("needs-attention");
+    els.confirmingOverlay.hidden = true;
+    document.body.classList.remove("checkout-submitting");
+  }
 
-    window.setTimeout(() => {
-      card?.classList.remove("needs-attention");
-    }, 1400);
+  function wait(ms) {
+    return new Promise(resolve =>
+      window.setTimeout(resolve, ms)
+    );
   }
 
   function unlockStep(number) {
@@ -675,35 +679,18 @@
   async function placeOrder() {
     updateCheckoutState();
 
-    if (state.submitting) {
-      return;
-    }
-
-    if (!els.detailsConfirmed.checked) {
-      showToast(
-        "Confirm your details",
-        "Please check and confirm your profile and delivery address."
-      );
-      focusConfirmation(els.detailsConfirmed);
-      return;
-    }
-
-    if (!els.termsConfirmed.checked) {
-      showToast(
-        "One final confirmation",
-        "Please confirm your harvest details before placing the order."
-      );
-      focusConfirmation(els.termsConfirmed);
-      return;
-    }
-
-    if (!formIsValid()) {
+    if (!formIsValid() || state.submitting) {
       return;
     }
 
     state.submitting = true;
     els.placeOrder.disabled = true;
-    els.placeOrder.textContent = "Placing Harvest Order…";
+    els.placeOrder.textContent = "Confirming Harvest…";
+
+    showConfirmingOverlay();
+
+    const startedAt = Date.now();
+    const minimumLoaderMs = 800;
 
     try {
       const response = await fetch(API_URL, {
@@ -713,49 +700,88 @@
 
       const data = await response.json();
 
-      if (!data.ok) {
-        throw new Error(data.message || "Order creation failed.");
+      const elapsed =
+        Date.now() - startedAt;
+
+      if (elapsed < minimumLoaderMs) {
+        await wait(
+          minimumLoaderMs - elapsed
+        );
       }
 
-      writeJson(CUSTOMER_SESSION_KEY, {
-        customerId: data.customerId,
-        phoneKey: normalizePhone(els.phone.value),
-        name: els.name.value.trim(),
-        orderId: data.orderId,
-        updatedAt: new Date().toISOString()
-      });
+      if (!data.ok) {
+        throw new Error(
+          data.message ||
+          "Order creation failed."
+        );
+      }
+
+      writeJson(
+        CUSTOMER_SESSION_KEY,
+        {
+          customerId: data.customerId,
+          phoneKey:
+            normalizePhone(
+              els.phone.value
+            ),
+          name:
+            els.name.value.trim(),
+          orderId:
+            data.orderId,
+          updatedAt:
+            new Date().toISOString()
+        }
+      );
 
       if (window.MFBCart) {
         window.MFBCart.clear();
       } else {
-        localStorage.removeItem(CART_KEY);
+        localStorage.removeItem(
+          CART_KEY
+        );
 
         if (
-          typeof window.updateSharedCartCount === "function"
+          typeof window.updateSharedCartCount ===
+          "function"
         ) {
           window.updateSharedCartCount();
         }
       }
 
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(
+        DRAFT_KEY
+      );
 
-      els.successOrderId.textContent = data.orderId;
+      els.successOrderId.textContent =
+        data.orderId;
+
       els.successDelivery.textContent =
-        `Expected delivery: ${formatDeliveryDate(data.deliveryDate)}, between 9:00 a.m. and 9:00 p.m.`;
+        `Expected delivery: ${formatDeliveryDate(
+          data.deliveryDate
+        )}, between 9:00 a.m. and 9:00 p.m.`;
 
       els.paymentCopy.textContent =
         data.paymentInstructions ||
         "Our Singapore team will share the payment instructions.";
 
+      hideConfirmingOverlay();
+
       els.successDialog.showModal();
+
     } catch (error) {
+      hideConfirmingOverlay();
+
       showToast(
         "Order not placed",
-        error.message || "Please try again."
+        error.message ||
+        "Please try again."
       );
+
     } finally {
       state.submitting = false;
-      els.placeOrder.textContent = "Place Harvest Order";
+      els.placeOrder.textContent =
+        "Place Harvest Order";
+
       updateCheckoutState();
     }
   }
@@ -782,6 +808,7 @@
       renderSummary();
       updateCheckoutState();
     } catch (error) {
+      hideConfirmingOverlay();
       els.guard.hidden = true;
       els.empty.hidden = false;
       els.emptyMessage.textContent =
