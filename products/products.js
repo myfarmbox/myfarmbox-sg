@@ -1,5 +1,5 @@
 /*
-MyFarmBox Singapore Products v41
+MyFarmBox Singapore Products v49
 Loading order:
 1. Browser cache
 2. /data/products.json
@@ -18,7 +18,12 @@ Loading order:
     filteredProducts: [],
     activeCategory: "all",
     searchTerm: "",
-    minimumOrderKg: config.DEFAULT_MINIMUM_ORDER_KG,
+    minimumOrderKg: Number(config.DEFAULT_MINIMUM_ORDER_KG || 5),
+    maximumOrderKg: Number(
+      cartStore?.maximumOrderEquivalentKg ||
+      config.MAX_ORDER_EQUIVALENT_KG ||
+      20
+    ),
     renderedCount: 0,
     renderToken: 0,
     toastTimer: null
@@ -158,7 +163,15 @@ Loading order:
 
     state.minimumOrderKg = Number(
       data.settings?.minimumOrderKg ||
-      config.DEFAULT_MINIMUM_ORDER_KG
+      config.DEFAULT_MINIMUM_ORDER_KG ||
+      5
+    );
+
+    state.maximumOrderKg = Number(
+      data.settings?.maximumOrderKg ||
+      cartStore?.maximumOrderEquivalentKg ||
+      config.MAX_ORDER_EQUIVALENT_KG ||
+      20
     );
 
     if (
@@ -344,13 +357,98 @@ Loading order:
       .replaceAll("'", "&#039;");
   }
 
+
+  function unitEquivalentKg(item) {
+    const value = Number(item.unitValue || 0);
+    const unit = String(item.unitType || "")
+      .trim()
+      .toLowerCase();
+
+    if (unit === "kg") return value;
+    if (unit === "g") return value / 1000;
+    if (unit === "ml") return value / 1000;
+
+    if (
+      unit === "l" ||
+      unit === "ltr" ||
+      unit === "litre" ||
+      unit === "liter"
+    ) {
+      return value;
+    }
+
+    return 0;
+  }
+
+  function currentEquivalentKg(cart = cartStore.read()) {
+    if (typeof cartStore.totalEquivalentKg === "function") {
+      return Number(cartStore.totalEquivalentKg(cart) || 0);
+    }
+
+    return Number(cartStore.totalWeightKg(cart) || 0);
+  }
+
+  function projectedEquivalentKg(product, quantityValue) {
+    if (
+      typeof cartStore.projectedTotalEquivalentKg ===
+      "function"
+    ) {
+      return Number(
+        cartStore.projectedTotalEquivalentKg(
+          product,
+          quantityValue
+        ) || 0
+      );
+    }
+
+    const cart = cartStore.read();
+    const current = currentEquivalentKg(cart);
+    const existingQuantity =
+      cartStore.quantity(product.handleId);
+
+    const unitEq = unitEquivalentKg(product);
+
+    return (
+      current -
+      unitEq * existingQuantity +
+      unitEq * Number(quantityValue || 0)
+    );
+  }
+
+  function canSetProduct(product, quantityValue) {
+    if (Number(quantityValue || 0) <= 0) {
+      return true;
+    }
+
+    if (typeof cartStore.canSetProduct === "function") {
+      return cartStore.canSetProduct(
+        product,
+        quantityValue
+      );
+    }
+
+    return (
+      projectedEquivalentKg(
+        product,
+        quantityValue
+      ) <= state.maximumOrderKg
+    );
+  }
+
   function updateSummary() {
     const cart = cartStore.read();
     const itemCount = cartStore.totalItems(cart);
-    const weightKg = cartStore.totalWeightKg(cart);
+    const equivalentKg = currentEquivalentKg(cart);
     const total = cartStore.totalValue(cart);
-    const minimumKg = Number(state.minimumOrderKg);
-    const remaining = Math.max(0, minimumKg - weightKg);
+    const minimumKg = Number(state.minimumOrderKg || 5);
+    const maximumKg = Number(state.maximumOrderKg || 20);
+
+    const remainingMinimum =
+      Math.max(0, minimumKg - equivalentKg);
+
+    const remainingMaximum =
+      Math.max(0, maximumKg - equivalentKg);
+
     const hasExemptProduct = cart.some(
       item =>
         item.minimumOrderExempt === true &&
@@ -358,55 +456,134 @@ Loading order:
     );
 
     const ready =
-      weightKg >= minimumKg ||
+      equivalentKg >= minimumKg ||
       hasExemptProduct;
 
-    const progress = hasExemptProduct
+    const minimumProgress = hasExemptProduct
       ? 100
       : minimumKg > 0
-        ? Math.min(100, (weightKg / minimumKg) * 100)
+        ? Math.min(
+            100,
+            (equivalentKg / minimumKg) * 100
+          )
         : 100;
 
-    elements.cartCount.textContent = String(itemCount);
-    elements.minimumWeight.textContent =
-      `${weightKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg`;
-    elements.minimumProgress.style.width = `${progress}%`;
-    elements.dockProgressFill.style.width = `${progress}%`;
-    elements.dockWeight.textContent =
-      `${weightKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg`;
-    elements.dockTotal.textContent = currency(total);
+    const dockProgress = ready
+      ? Math.min(
+          100,
+          (equivalentKg / maximumKg) * 100
+        )
+      : minimumProgress;
+
+    elements.cartCount.textContent =
+      String(itemCount);
+
+    elements.dockTotal.textContent =
+      currency(total);
+
+    elements.minimumProgress.style.width =
+      `${minimumProgress}%`;
+
+    elements.dockProgressFill.style.width =
+      `${dockProgress}%`;
 
     if (hasExemptProduct) {
       elements.minimumStatus.textContent =
-        "Your harvest is ready for purchase.";
+        "Minimum order requirement is covered.";
 
       elements.minimumWeight.textContent =
-        "Complete harvest selected";
+        "Minimum exempt";
+
+      elements.dockStatus.textContent =
+        equivalentKg >= maximumKg
+          ? "Maximum harvest reached"
+          : "Harvest ready ✓";
+
+      elements.dockWeight.textContent =
+        `${equivalentKg.toFixed(2)} / ${maximumKg.toFixed(2)} kg eq.`;
+
+      elements.checkoutButton.classList.remove(
+        "disabled"
+      );
+
+      elements.checkoutButton.setAttribute(
+        "aria-disabled",
+        "false"
+      );
+
+      return;
+    }
+
+    if (equivalentKg >= maximumKg) {
+      elements.minimumStatus.textContent =
+        "Your harvest is ready.";
+
+      elements.minimumWeight.textContent =
+        `${equivalentKg.toFixed(2)} kg eq.`;
+
+      elements.dockStatus.textContent =
+        "Maximum harvest reached";
+
+      elements.dockWeight.textContent =
+        `${equivalentKg.toFixed(2)} / ${maximumKg.toFixed(2)} kg eq.`;
+
+      elements.checkoutButton.classList.remove(
+        "disabled"
+      );
+
+      elements.checkoutButton.setAttribute(
+        "aria-disabled",
+        "false"
+      );
+
+      return;
+    }
+
+    if (ready) {
+      elements.minimumStatus.textContent =
+        `Minimum reached · ${remainingMaximum.toFixed(2)} kg eq. available`;
+
+      elements.minimumWeight.textContent =
+        `${equivalentKg.toFixed(2)} / ${maximumKg.toFixed(2)} kg eq.`;
 
       elements.dockStatus.textContent =
         "Harvest ready ✓";
 
       elements.dockWeight.textContent =
-        "Ready for purchase";
+        `${equivalentKg.toFixed(2)} / ${maximumKg.toFixed(2)} kg eq.`;
 
-      elements.minimumProgress.style.width = "100%";
-      elements.dockProgressFill.style.width = "100%";
+      elements.checkoutButton.classList.remove(
+        "disabled"
+      );
 
-      elements.checkoutButton.classList.remove("disabled");
-      elements.checkoutButton.setAttribute("aria-disabled", "false");
-    } else if (ready) {
-      elements.minimumStatus.textContent = "Your harvest is ready.";
-      elements.dockStatus.textContent = "Ready for checkout ✓";
-      elements.checkoutButton.classList.remove("disabled");
-      elements.checkoutButton.setAttribute("aria-disabled", "false");
-    } else {
-      elements.minimumStatus.textContent =
-        `Add another ${remaining.toFixed(2)} kg.`;
-      elements.dockStatus.textContent =
-        `Add ${remaining.toFixed(2)} kg more`;
-      elements.checkoutButton.classList.add("disabled");
-      elements.checkoutButton.setAttribute("aria-disabled", "true");
+      elements.checkoutButton.setAttribute(
+        "aria-disabled",
+        "false"
+      );
+
+      return;
     }
+
+    elements.minimumStatus.textContent =
+      `Add another ${remainingMinimum.toFixed(2)} kg eq.`;
+
+    elements.minimumWeight.textContent =
+      `${equivalentKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg eq.`;
+
+    elements.dockStatus.textContent =
+      `Add ${remainingMinimum.toFixed(2)} kg eq. more`;
+
+    elements.dockWeight.textContent =
+      `${equivalentKg.toFixed(2)} / ${minimumKg.toFixed(2)} kg eq.`;
+
+    elements.checkoutButton.classList.add(
+      "disabled"
+    );
+
+    elements.checkoutButton.setAttribute(
+      "aria-disabled",
+      "true"
+    );
   }
 
   function initialiseImage(card, imageUrl) {
@@ -622,14 +799,31 @@ Loading order:
   }
 
   function setProductQuantity(product, quantity) {
-  cartStore.setProduct(product, quantity);
+    const existingQuantity =
+      cartStore.quantity(product.handleId);
+
+    if (
+      quantity > existingQuantity &&
+      !canSetProduct(product, quantity)
+    ) {
+      showToast(
+        "Maximum harvest reached",
+        `Your order can include up to ${state.maximumOrderKg.toFixed(0)} kg equivalent.`
+      );
+      return;
+    }
+
+    cartStore.setProduct(product, quantity);
     refreshCard(product);
     updateSummary();
 
-    const finalQuantity = cartStore.quantity(product.handleId);
+    const finalQuantity =
+      cartStore.quantity(product.handleId);
 
     showToast(
-      finalQuantity > 0 ? "Updated your harvest" : "Removed from harvest",
+      finalQuantity > 0
+        ? "Updated your harvest"
+        : "Removed from harvest",
       finalQuantity > 0
         ? `${finalQuantity} × ${displayName(product).primary}`
         : displayName(product).primary
@@ -657,6 +851,8 @@ Loading order:
       "Sweetners",
       "Oil",
       "Oils",
+      "Grocery",
+      "Groceries",
       "Combo Box"
     ];
 
@@ -759,11 +955,11 @@ Loading order:
 
     for (let index = start; index < end; index += 1) {
       fragment.appendChild(
-      createCard(
-        state.filteredProducts[index],
-        index
-      )
-    );
+        createCard(
+          state.filteredProducts[index],
+          index
+        )
+      );
     }
 
     elements.grid.appendChild(fragment);
@@ -950,6 +1146,7 @@ Loading order:
 
   elements.checkoutButton.addEventListener("click", event => {
     const cart = cartStore.read();
+    const equivalentKg = currentEquivalentKg(cart);
 
     const hasExemptProduct = cart.some(
       item =>
@@ -958,10 +1155,18 @@ Loading order:
     );
 
     if (
-      cartStore.totalWeightKg() < state.minimumOrderKg &&
+      equivalentKg < state.minimumOrderKg &&
       !hasExemptProduct
     ) {
       event.preventDefault();
+
+      showToast(
+        "Minimum harvest not reached",
+        `Add another ${Math.max(
+          0,
+          state.minimumOrderKg - equivalentKg
+        ).toFixed(2)} kg equivalent to continue.`
+      );
     }
   });
 
