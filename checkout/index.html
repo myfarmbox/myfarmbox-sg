@@ -17,7 +17,7 @@
   <link rel="manifest" href="/site.webmanifest">
 
   <link rel="stylesheet" href="/shared.css?v=22">
-  <link rel="stylesheet" href="styles.css?v=51">
+  <link rel="stylesheet" href="styles.css?v=52">
 </head>
 <body>
   <div id="site-header"></div>
@@ -26,8 +26,8 @@
     <header class="page-heading">
       <div>
         <p class="eyebrow">Confirm Harvest</p>
-        <h1>One final step before we plan your delivery.</h1>
-        <p class="lead">Verify your profile, delivery address and payment preference.</p>
+        <h1>Review and confirm your harvest.</h1>
+        <p class="lead">Check your details, delivery and payment preference. It only takes a moment.</p>
       </div>
 
       <a href="/cart/" class="back-link">← Back to My Harvest</a>
@@ -44,7 +44,7 @@
     <section id="empty-state" class="empty-state" hidden>
       <span aria-hidden="true">🌿</span>
       <h2>Your harvest is not ready yet.</h2>
-      <p id="empty-message">Please return to your basket and complete the 5 kg minimum.</p>
+      <p id="empty-message">Please return to your basket and complete the 5 kg equivalent minimum.</p>
       <a href="/cart/">Review My Harvest →</a>
     </section>
 
@@ -150,10 +150,14 @@
             <input id="lat-long" name="latLong" type="hidden">
             <input id="source-waitlist-id" name="sourceWaitlistId" type="hidden">
 
-            <div class="confirmation-choice">
-              <label>
+            <div class="confirmation-choice confirmation-card">
+              <label for="details-confirmed">
                 <input id="details-confirmed" type="checkbox">
-                <span>I have checked and confirmed these details.</span>
+                <span class="confirmation-box" aria-hidden="true"></span>
+                <span class="confirmation-copy">
+                  <strong>Confirm my details</strong>
+                  <small>I’ve checked my name, contact number and delivery address.</small>
+                </span>
               </label>
             </div>
           </form>
@@ -200,12 +204,16 @@
             </div>
           </div>
 
-          <label class="terms-row">
-            <input id="terms-confirmed" type="checkbox">
-            <span>
-              I confirm the order details and understand that fresh produce availability may vary slightly with the harvest.
-            </span>
-          </label>
+          <div class="terms-confirmation confirmation-card">
+            <label for="terms-confirmed">
+              <input id="terms-confirmed" type="checkbox">
+              <span class="confirmation-box" aria-hidden="true"></span>
+              <span class="confirmation-copy">
+                <strong>Ready to place my harvest</strong>
+                <small>I’ve checked my order and understand that fresh produce availability may vary slightly with the harvest.</small>
+              </span>
+            </label>
+          </div>
         </section>
       </div>
 
@@ -219,7 +227,7 @@
 
           <div class="summary-row">
             <span>Harvest weight</span>
-            <strong id="summary-weight">0.00 kg</strong>
+            <strong id="summary-weight">0.00 kg eq.</strong>
           </div>
 
           <div class="summary-row">
@@ -253,7 +261,7 @@
           </button>
 
           <p class="summary-note">
-            Your order is written to the MyFarmBox Singapore order system only after you confirm.
+            No payment is taken at this step. We’ll confirm your harvest and share payment details separately.
           </p>
         </div>
       </aside>
@@ -309,6 +317,6 @@
 
   <script src="/shared.js?v=22"></script>
   <script src="/cart-engine.js?v=49"></script>
-  <script src="checkout.js?v=51"></script>
+  <script src="checkout.js?v=52"></script>
 </body>
 </html>

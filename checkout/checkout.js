@@ -225,6 +225,23 @@
     }, 2400);
   }
 
+  function focusConfirmation(input) {
+    if (!input) return;
+
+    const card = input.closest(".confirmation-card");
+
+    card?.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    card?.classList.add("needs-attention");
+
+    window.setTimeout(() => {
+      card?.classList.remove("needs-attention");
+    }, 1400);
+  }
+
   function showConfirmingOverlay() {
     if (!els.confirmingOverlay) return;
 
@@ -679,7 +696,29 @@
   async function placeOrder() {
     updateCheckoutState();
 
-    if (!formIsValid() || state.submitting) {
+    if (state.submitting) {
+      return;
+    }
+
+    if (!els.detailsConfirmed.checked) {
+      showToast(
+        "Confirm your details",
+        "Please check and confirm your profile and delivery address."
+      );
+      focusConfirmation(els.detailsConfirmed);
+      return;
+    }
+
+    if (!els.termsConfirmed.checked) {
+      showToast(
+        "One final confirmation",
+        "Please confirm your harvest details before placing the order."
+      );
+      focusConfirmation(els.termsConfirmed);
+      return;
+    }
+
+    if (!formIsValid()) {
       return;
     }
 
@@ -700,72 +739,50 @@
 
       const data = await response.json();
 
-      const elapsed =
-        Date.now() - startedAt;
+      const elapsed = Date.now() - startedAt;
 
       if (elapsed < minimumLoaderMs) {
-        await wait(
-          minimumLoaderMs - elapsed
-        );
+        await wait(minimumLoaderMs - elapsed);
       }
 
       if (!data.ok) {
         throw new Error(
-          data.message ||
-          "Order creation failed."
+          data.message || "Order creation failed."
         );
       }
 
-      writeJson(
-        CUSTOMER_SESSION_KEY,
-        {
-          customerId: data.customerId,
-          phoneKey:
-            normalizePhone(
-              els.phone.value
-            ),
-          name:
-            els.name.value.trim(),
-          orderId:
-            data.orderId,
-          updatedAt:
-            new Date().toISOString()
-        }
-      );
+      writeJson(CUSTOMER_SESSION_KEY, {
+        customerId: data.customerId,
+        phoneKey: normalizePhone(els.phone.value),
+        name: els.name.value.trim(),
+        orderId: data.orderId,
+        updatedAt: new Date().toISOString()
+      });
 
       if (window.MFBCart) {
         window.MFBCart.clear();
       } else {
-        localStorage.removeItem(
-          CART_KEY
-        );
+        localStorage.removeItem(CART_KEY);
 
         if (
-          typeof window.updateSharedCartCount ===
-          "function"
+          typeof window.updateSharedCartCount === "function"
         ) {
           window.updateSharedCartCount();
         }
       }
 
-      localStorage.removeItem(
-        DRAFT_KEY
-      );
+      localStorage.removeItem(DRAFT_KEY);
 
-      els.successOrderId.textContent =
-        data.orderId;
+      els.successOrderId.textContent = data.orderId;
 
       els.successDelivery.textContent =
-        `Expected delivery: ${formatDeliveryDate(
-          data.deliveryDate
-        )}, between 9:00 a.m. and 9:00 p.m.`;
+        `Expected delivery: ${formatDeliveryDate(data.deliveryDate)}, between 9:00 a.m. and 9:00 p.m.`;
 
       els.paymentCopy.textContent =
         data.paymentInstructions ||
         "Our Singapore team will share the payment instructions.";
 
       hideConfirmingOverlay();
-
       els.successDialog.showModal();
 
     } catch (error) {
@@ -773,15 +790,12 @@
 
       showToast(
         "Order not placed",
-        error.message ||
-        "Please try again."
+        error.message || "Please try again."
       );
 
     } finally {
       state.submitting = false;
-      els.placeOrder.textContent =
-        "Place Harvest Order";
-
+      els.placeOrder.textContent = "Place Harvest Order";
       updateCheckoutState();
     }
   }
