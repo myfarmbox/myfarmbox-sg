@@ -262,6 +262,45 @@
         Explore Harvest <span aria-hidden="true">→</span>
       </a>
     </section>
+
+    <section class="harvest-film" aria-labelledby="harvest-film-title">
+  <div class="harvest-film__copy">
+    <p class="eyebrow">From farm to family</p>
+    <h2 id="harvest-film-title">Every thoughtful harvest begins with a family.</h2>
+    <p>
+      See how your family’s choices become a planned harvest,
+      packed with care and delivered to your home.
+    </p>
+
+    <button class="film-button" type="button" data-open-film>
+      Watch our story
+      <span aria-hidden="true">→</span>
+    </button>
+  </div>
+
+  <button class="harvest-film__visual" type="button" data-open-film aria-label="Watch the MyFarmBox harvest journey">
+    <img src="https://i.ytimg.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg"
+         alt="A MyFarmBox harvest crate filled with fresh 100% Natural Produce">
+    <span class="play-circle" aria-hidden="true">▶</span>
+  </button>
+</section>
+
+<div class="film-modal" id="film-modal" aria-hidden="true">
+  <div class="film-modal__backdrop" data-close-film></div>
+
+  <div class="film-modal__dialog" role="dialog" aria-modal="true" aria-label="MyFarmBox harvest journey video">
+    <button class="film-modal__close" type="button" data-close-film aria-label="Close video">×</button>
+    <div class="film-modal__video">
+      <iframe
+        id="mfb-film-player"
+        title="MyFarmBox Singapore harvest journey"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+</div>
+    
   </main>
 
 <div id="site-footer"></div>
