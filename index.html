@@ -325,5 +325,45 @@
 
   <script src="/shared.js?v=20"></script>
   <script src="/app.js?v=20"></script>
+
+  <script>
+  (() => {
+    const modal = document.getElementById('film-modal');
+    const player = document.getElementById('mfb-film-player');
+    const videoId = 'YOUR_VIDEO_ID';
+
+    function openFilm() {
+      player.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      sessionStorage.setItem('mfb-film-seen', 'true');
+    }
+
+    function closeFilm() {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      player.src = '';
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('[data-open-film]').forEach(button => {
+      button.addEventListener('click', openFilm);
+    });
+
+    document.querySelectorAll('[data-close-film]').forEach(button => {
+      button.addEventListener('click', closeFilm);
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeFilm();
+    });
+
+    setTimeout(() => {
+      if (!sessionStorage.getItem('mfb-film-seen')) openFilm();
+    }, 8000);
+  })();
+</script>
+  
 </body>
 </html>
