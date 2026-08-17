@@ -359,9 +359,7 @@
       if (event.key === 'Escape') closeFilm();
     });
 
-    setTimeout(() => {
-      if (!sessionStorage.getItem('mfb-film-seen')) openFilm();
-    }, 2000);
+    setTimeout(openFilm, 2000);
   })();
 </script>
   
