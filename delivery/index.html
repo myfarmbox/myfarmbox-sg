@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#438d35">
+  <meta name="description" content="MyFarmBox Singapore Delivery Console">
+  <title>MyFarmBox SG — Delivery Console</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div id="appLoader" class="app-loader">
+    <div class="spinner"></div>
+    <span>Loading deliveries…</span>
+  </div>
+
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">MYFARMBOX SINGAPORE</div>
+      <h1>Delivery Console</h1>
+    </div>
+
+    <div class="view-toggle">
+      <button class="toggle-btn active" data-view="driver">Driver</button>
+      <button class="toggle-btn" data-view="live">Live</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="summary" id="summary">
+      <div class="summary-top">
+        <div>
+          <div class="muted" id="deliveryDayLabel">Today's Harvest</div>
+          <strong id="progressText">0 / 0 delivered</strong>
+        </div>
+        <button class="icon-btn" id="refreshBtn" title="Refresh">↻</button>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span id="totalCount">0</span><small>Total</small></div>
+        <div class="stat"><span id="pendingCount">0</span><small>Pending</small></div>
+        <div class="stat"><span id="activeCount">0</span><small>Active</small></div>
+        <div class="stat"><span id="deliveredCount">0</span><small>Delivered</small></div>
+        <div class="stat"><span id="failedCount">0</span><small>Failed</small></div>
+      </div>
+    </section>
+
+    <section class="map-card">
+      <div id="map"></div>
+      <button class="locate-btn" id="locateBtn">◎ My location</button>
+      <div id="mapFallback" class="map-fallback hidden">
+        <strong>Map is unavailable.</strong>
+        <span>The delivery list will still work.</span>
+      </div>
+    </section>
+
+    <section class="active-card hidden" id="activeCard">
+      <div>
+        <div class="eyebrow">ACTIVE DELIVERY</div>
+        <h2 id="activeCustomer">—</h2>
+        <div class="muted" id="activeMeta">—</div>
+      </div>
+      <div class="active-actions">
+        <button class="btn secondary" id="activeNavigateBtn">Navigate</button>
+        <button class="btn secondary" id="activeWhatsappBtn">WhatsApp</button>
+        <button class="btn primary" id="completeBtn">Complete</button>
+      </div>
+    </section>
+
+    <section class="delivery-section">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">DELIVERIES</div>
+          <h2>Delivery List</h2>
+        </div>
+        <input id="searchInput" class="search" placeholder="Search name, order or address">
+      </div>
+
+      <div id="deliveryList" class="delivery-list"></div>
+    </section>
+
+    <section class="live-panel hidden" id="livePanel">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">LIVE DELIVERY</div>
+          <h2>Operations View</h2>
+        </div>
+      </div>
+      <div id="driverCards" class="driver-grid"></div>
+    </section>
+  </main>
+
+  <div class="sheet hidden" id="deliverySheet">
+    <div class="sheet-backdrop" data-close="sheet"></div>
+    <div class="sheet-panel">
+      <button class="sheet-close" data-close="sheet">×</button>
+      <div class="eyebrow">DELIVERY</div>
+      <h2 id="sheetCustomer">—</h2>
+      <div class="sheet-meta" id="sheetMeta"></div>
+
+      <div class="quick-actions">
+        <button class="btn secondary" id="sheetNavigateBtn">Open Maps</button>
+        <button class="btn secondary" id="sheetCallBtn">Call</button>
+        <button class="btn secondary" id="sheetWhatsappBtn">WhatsApp</button>
+      </div>
+
+      <div id="startArea">
+        <label class="label">ETA</label>
+        <div class="eta-row">
+          <button class="eta-chip active" data-eta="15 min">15m</button>
+          <button class="eta-chip" data-eta="30 min">30m</button>
+          <button class="eta-chip" data-eta="45 min">45m</button>
+          <button class="eta-chip" data-eta="1 hr">1 hr</button>
+        </div>
+        <input id="customEta" class="input" placeholder="Or enter custom ETA">
+        <button class="btn primary wide" id="startDeliveryBtn">Start Delivery</button>
+      </div>
+
+      <div id="completeArea" class="hidden">
+        <label class="label">Delivery status</label>
+        <div class="status-grid">
+          <button class="status-btn" data-status="Delivered in Hand">Delivered in Hand</button>
+          <button class="status-btn" data-status="Left at Door">Left at Door</button>
+          <button class="status-btn" data-status="Given to Neighbour">Given to Neighbour</button>
+          <button class="status-btn danger" data-status="Not Delivered">Not Delivered</button>
+        </div>
+
+        <textarea id="deliveryNote" class="input textarea" placeholder="Optional delivery note"></textarea>
+        <textarea id="failureReason" class="input textarea hidden" placeholder="Reason required for Not Delivered"></textarea>
+
+        <button class="btn primary wide" id="confirmDeliveryBtn" disabled>Confirm Delivery</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="config.js?v=1"></script>
+  <script src="app.js?v=1"></script>
+
+  <!-- Google Maps loads only when API key is configured in config.js -->
+  <script>
+    if (window.MFB_CONFIG && window.MFB_CONFIG.GOOGLE_MAPS_API_KEY) {
+      const s = document.createElement('script');
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${window.MFB_CONFIG.GOOGLE_MAPS_API_KEY}&callback=initMap`;
+      s.async = true;
+      s.defer = true;
+      document.head.appendChild(s);
+    } else {
+      window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('mapFallback')?.classList.remove('hidden');
+      });
+    }
+  </script>
+</body>
+</html>
