@@ -899,12 +899,25 @@ body {
 }
 
 @media (max-width: 480px) {
-  .dock-total {
-    display: none;
-  }
 
   .harvest-dock {
-    grid-template-columns: 1fr auto auto;
+    width: calc(100vw - 12px);
+    padding: 9px;
+    column-gap: 6px;
+  }
+
+  .dock-copy strong {
+    font-size: 10px;
+  }
+
+  .dock-progress > span {
+    font-size: 8px;
+  }
+
+  .reset-cart-button,
+  .checkout-button {
+    padding: 0 9px;
+    font-size: 8px;
   }
 }
 
@@ -1049,4 +1062,13 @@ body {
     margin-top: 4px;
     font-size: 7px;
   }
+   @media (max-width: 480px) {
+  .dock-total {
+    display: none;
+  }
+
+  .harvest-dock {
+    grid-template-columns: 1fr auto auto;
+  }
 }
+
