@@ -13,7 +13,7 @@
   }
 
   const supabase = client();
-  const checkoutUrl = () => `${window.location.origin}/checkout/`;
+  const defaultRedirectUrl = () => `${window.location.origin}/checkout/`;
 
   window.MFBAuth = {
     getUser: async () => {
@@ -21,17 +21,17 @@
       if (error) return null;
       return data.user || null;
     },
-    signInWithGoogle: async () => {
+    signInWithGoogle: async (redirectTo = defaultRedirectUrl()) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: checkoutUrl() }
+        options: { redirectTo }
       });
       if (error) throw error;
     },
-    sendMagicLink: async email => {
+    sendMagicLink: async (email, redirectTo = defaultRedirectUrl()) => {
       const { error } = await supabase.auth.signInWithOtp({
         email: String(email || "").trim(),
-        options: { emailRedirectTo: checkoutUrl() }
+        options: { emailRedirectTo: redirectTo }
       });
       if (error) throw error;
     },

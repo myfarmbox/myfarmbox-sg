@@ -14,7 +14,16 @@
     { label: "Home", href: "/" },
     { label: "Founding Harvest", href: "/join/" },
     { label: "Products", href: "/products/" },
-    { label: "Account", href: "/account/" }
+    {
+      label: (() => {
+        try {
+          return JSON.parse(localStorage.getItem("mfb_sg_auth_user_v1") || "{}").email
+            ? "My Account"
+            : "Sign in";
+        } catch { return "Sign in"; }
+      })(),
+      href: "/account/"
+    }
   ];
 
   function isActivePath(href) {
