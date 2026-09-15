@@ -507,6 +507,7 @@
     els.authSignedIn.hidden = false;
     els.authUserEmail.textContent = user.email;
     els.authMessage.textContent = "";
+    localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ email: user.email }));
 
     try {
       const response = await fetch(`${API_URL}?action=getAccount&phone=&email=${encodeURIComponent(user.email)}`, { cache: "no-store" });
@@ -915,6 +916,7 @@
   els.guestCheckout.addEventListener("click", openGuestCheckout);
   els.signOut.addEventListener("click", async () => {
     await window.MFBAuth?.signOut();
+    localStorage.removeItem("mfb_sg_auth_user_v1");
     window.location.reload();
   });
 
