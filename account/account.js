@@ -1166,14 +1166,15 @@
       `tel:+${digits}`;
   }
 
-  function logout() {
+  async function logout() {
+    window.showMfbLoader?.("Signing you out…");
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem("mfb_sg_auth_user_v1");
-    window.MFBAuth?.signOut();
-    account = null;
-    els.accountView.hidden = true;
-    els.loginView.hidden = false;
-    els.loginMessage.textContent = "";
+    try {
+      await window.MFBAuth?.signOut();
+    } finally {
+      window.location.assign("/");
+    }
   }
 
   async function initialise() {
@@ -1233,7 +1234,7 @@
     els.googleLogin.disabled = true;
     els.googleLogin.textContent = "Opening Google…";
     try {
-      await window.MFBAuth.signInWithGoogle(`${window.location.origin}/checkout/`);
+      await window.MFBAuth.signInWithGoogle(`${window.location.origin}/account/`);
     } catch (error) {
       els.authMessage.textContent = error.message || "Google sign-in could not start.";
       els.googleLogin.disabled = false;
@@ -1250,7 +1251,7 @@
     els.magicLogin.disabled = true;
     els.magicLogin.textContent = "Sending…";
     try {
-      await window.MFBAuth.sendMagicLink(email, `${window.location.origin}/checkout/`);
+      await window.MFBAuth.sendMagicLink(email, `${window.location.origin}/account/`);
       els.authMessage.textContent = "Check your email and open the sign-in link.";
     } catch (error) {
       els.authMessage.textContent = error.message || "We could not send the sign-in link.";
