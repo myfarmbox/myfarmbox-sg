@@ -21,7 +21,7 @@
       const user = JSON.parse(localStorage.getItem("mfb_sg_auth_user_v1") || "{}");
       if (!user.email) return '<a class="header-signin" href="/account/">Sign in</a>';
       const name = String(user.name || user.email.split("@")[0]).split(/\s+/)[0];
-      return `<span class="header-greeting">Hi, ${name}</span><a class="header-account" href="/account/">My Account</a><a class="header-logout" href="/account/#logout">Logout</a>`;
+      return `<span class="header-greeting">Hi, ${name}</span><a class="header-account" href="/account/">My Account</a><a class="header-logout" href="/">Logout</a>`;
     } catch { return '<a class="header-signin" href="/account/">Sign in</a>'; }
   }
 
@@ -159,6 +159,20 @@
 
     mount.querySelectorAll("[data-talk-to-us]").forEach(button => {
       button.addEventListener("click", openCallDialog);
+    });
+
+    mount.querySelectorAll(".header-logout").forEach(link => {
+      link.addEventListener("click", async event => {
+        event.preventDefault();
+        window.showMfbLoader?.("Signing you out…");
+        try {
+          await window.MFBAuth?.signOut();
+        } finally {
+          localStorage.removeItem("mfb_sg_customer_session_v1");
+          localStorage.removeItem("mfb_sg_auth_user_v1");
+          window.location.assign("/");
+        }
+      });
     });
 
     updateSharedCartCount();
