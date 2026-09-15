@@ -208,8 +208,6 @@
 
   function renderAccount() {
     const customer = account.customer || {};
-    const signedIn = readJson("mfb_sg_auth_user_v1", {});
-    if (signedIn.email) localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ ...signedIn, name: customer.name || signedIn.name }));
     const address = account.address || {};
     const addresses = Array.isArray(account.addresses) ? account.addresses : (address.addressId ? [address] : []);
     const orders = Array.isArray(account.orders)
@@ -1161,25 +1159,11 @@
   }
 
   async function initialise() {
-    if (window.location.hash === "#logout") {
-      await window.MFBAuth?.signOut();
-      localStorage.removeItem(SESSION_KEY);
-      localStorage.removeItem("mfb_sg_auth_user_v1");
-      window.history.replaceState({}, "", "/account/");
-      return;
-    }
     const user = await window.MFBAuth?.getUser();
     if (user?.email) {
       localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ email: user.email }));
       els.loginEmail.value = user.email;
       await loadAccount("", user.email);
-      return;
-    }
-
-    const authHint = readJson("mfb_sg_auth_user_v1", {});
-    if (authHint.email) {
-      els.loginEmail.value = authHint.email;
-      await loadAccount("", authHint.email);
       return;
     }
     const session = readSession();
@@ -1195,18 +1179,6 @@
     }
   }
 
-  window.MFBAuth?.onChange(user => {
-    if (!user?.email || account) return;
-
-    localStorage.setItem(
-      "mfb_sg_auth_user_v1",
-      JSON.stringify({ email: user.email })
-    );
-
-    els.loginEmail.value = user.email;
-    loadAccount("", user.email);
-  });
-
   els.loginButton.onclick = () =>
     loadAccount(
       els.loginPhone.value,
@@ -1217,7 +1189,7 @@
     els.googleLogin.disabled = true;
     els.googleLogin.textContent = "Opening Google…";
     try {
-      await window.MFBAuth.signInWithGoogle(`${window.location.origin}/checkout/`);
+      await window.MFBAuth.signInWithGoogle(`${window.location.origin}/account/`);
     } catch (error) {
       els.authMessage.textContent = error.message || "Google sign-in could not start.";
       els.googleLogin.disabled = false;
@@ -1234,7 +1206,7 @@
     els.magicLogin.disabled = true;
     els.magicLogin.textContent = "Sending…";
     try {
-      await window.MFBAuth.sendMagicLink(email, `${window.location.origin}/checkout/`);
+      await window.MFBAuth.sendMagicLink(email, `${window.location.origin}/account/`);
       els.authMessage.textContent = "Check your email and open the sign-in link.";
     } catch (error) {
       els.authMessage.textContent = error.message || "We could not send the sign-in link.";
