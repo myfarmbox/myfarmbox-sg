@@ -268,6 +268,33 @@
   window.updateSharedCartCount = updateSharedCartCount;
   window.renderMfbHeader = renderHeader;
 
+  function ensureLoader() {
+    let loader = document.getElementById("mfb-global-loader");
+    if (loader) return loader;
+    loader = document.createElement("div");
+    loader.id = "mfb-global-loader";
+    loader.className = "mfb-global-loader";
+    loader.hidden = true;
+    loader.setAttribute("role", "status");
+    loader.setAttribute("aria-live", "polite");
+    loader.innerHTML = '<div class="mfb-global-loader-card"><span></span><strong>Working…</strong><small>Please wait a moment.</small></div>';
+    document.body.appendChild(loader);
+    return loader;
+  }
+
+  window.showMfbLoader = function(message) {
+    const loader = ensureLoader();
+    loader.querySelector("strong").textContent = String(message || "Working…");
+    loader.hidden = false;
+    document.body.classList.add("mfb-loading");
+  };
+
+  window.hideMfbLoader = function() {
+    const loader = document.getElementById("mfb-global-loader");
+    if (loader) loader.hidden = true;
+    document.body.classList.remove("mfb-loading");
+  };
+
   function init() {
     renderHeader();
     renderFooter();

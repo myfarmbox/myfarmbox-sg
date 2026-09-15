@@ -327,6 +327,13 @@ textarea::placeholder { color: #98a39a; }
 .header-account,.header-signin { padding:9px 11px; border-radius:9px; background:var(--mfb-green-light); color:var(--mfb-green-dark); font-size:13px; font-weight:800; }
 .header-logout { color:var(--mfb-muted); font-size:12px; font-weight:700; }
 
+.mfb-global-loader { position:fixed; inset:0; z-index:9999; display:grid; place-items:center; padding:20px; background:rgba(20,54,29,.18); backdrop-filter:blur(4px); }
+.mfb-global-loader-card { min-width:220px; display:grid; justify-items:center; gap:7px; padding:24px; border:1px solid var(--mfb-border); border-radius:18px; background:var(--mfb-white); box-shadow:0 22px 60px rgba(20,54,29,.2); text-align:center; }
+.mfb-global-loader-card > span { width:29px; height:29px; border:3px solid #dce6d9; border-top-color:var(--mfb-green); border-radius:50%; animation:mfb-global-spin .75s linear infinite; }
+.mfb-global-loader-card strong { color:var(--mfb-deep); font-size:14px; }
+.mfb-global-loader-card small { color:var(--mfb-muted); font-size:12px; }
+@keyframes mfb-global-spin { to { transform:rotate(360deg); } }
+
 .header-cart {
   min-height: 44px;
   display: inline-flex;
