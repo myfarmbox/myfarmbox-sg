@@ -1,0 +1,1266 @@
+(() => {
+  "use strict";
+
+  const API_URL =
+    "https://script.google.com/macros/s/AKfycbw4ioZTLJKaFXWad3zJqyWXzde7-I5S6Q9LndoF2zu7EzgnEku75U2nAkceQBXLjpJi/exec";
+
+  const SESSION_KEY = "mfb_sg_customer_session_v1";
+  const CART_KEY = "mfb_sg_cart_v1";
+
+  let account = null;
+  let selectedOrder = null;
+  let toastTimer = null;
+  let addressMap = null;
+  let addressMarker = null;
+  let addressMapObserver = null;
+  let geocodeController = null;
+  let editingAddressId = "";
+  const DEFAULT_MAP_CENTER = [1.3521, 103.8198];
+
+  const $ = id => document.getElementById(id);
+
+  const els = {
+    loginView: $("login-view"),
+    accountView: $("account-view"),
+    loginPhone: $("login-phone"),
+    loginEmail: $("login-email"),
+    loginButton: $("login-button"),
+    loginMessage: $("login-message"),
+    googleLogin: $("account-google-login"),
+    magicEmail: $("account-magic-email"),
+    magicLogin: $("account-magic-login"),
+    authMessage: $("account-auth-message"),
+    avatar: $("avatar"),
+    heroName: $("hero-name"),
+    heroCustomerId: $("hero-customer-id"),
+    statOrders: $("stat-orders"),
+    statSpent: $("stat-spent"),
+    statUpcoming: $("stat-upcoming"),
+    statStatus: $("stat-status"),
+    upcomingSection: $("upcoming-section"),
+    upcomingOrderId: $("upcoming-order-id"),
+    upcomingDelivery: $("upcoming-delivery"),
+    upcomingOrderStatus: $("upcoming-order-status"),
+    upcomingTotal: $("upcoming-total"),
+    upcomingViewButton: $("upcoming-view-button"),
+    profileName: $("profile-name"),
+    profilePhone: $("profile-phone"),
+    profileEmail: $("profile-email"),
+    profileAdults: $("profile-adults"),
+    profileChildren: $("profile-children"),
+    addressLabel: $("address-label"),
+    addressDisplay: $("address-display"),
+    addressInstructions: $("address-instructions"),
+    addressList: $("address-list"),
+    addAddress: $("add-address-button"),
+    ordersList: $("orders-list"),
+    ordersEmpty: $("orders-empty"),
+    supportWhatsapp: $("support-whatsapp"),
+    supportCall: $("support-call"),
+    profileDialog: $("profile-dialog"),
+    addressDialog: $("address-dialog"),
+    orderDialog: $("order-dialog"),
+    editName: $("edit-name"),
+    editPhone: $("edit-phone"),
+    editEmail: $("edit-email"),
+    editAdults: $("edit-adults"),
+    editChildren: $("edit-children"),
+    editAddressLine: $("edit-address-line"),
+    editAddressLabel: $("edit-address-label"),
+    editUnitNumber: $("edit-unit-number"),
+    editBuilding: $("edit-building"),
+    editPostalCode: $("edit-postal-code"),
+    editPlaceName: $("edit-place-name"),
+    editDeliveryInstructions: $("edit-delivery-instructions"),
+    editLatLong: $("edit-lat-long"),
+    addressMap: $("address-map"),
+    useCurrentLocation: $("use-current-location"),
+    findWrittenAddress: $("find-written-address"),
+    mapStatus: $("map-status"),
+    mapCoordinates: $("map-coordinates"),
+    savedLocationWrap: $("saved-location-wrap"),
+    savedLocationCoordinates: $("saved-location-coordinates"),
+    savedAddressMap: $("saved-address-map"),
+    orderDialogId: $("order-dialog-id"),
+    orderDialogDelivery: $("order-dialog-delivery"),
+    orderDialogStatus: $("order-dialog-status"),
+    orderDialogPayment: $("order-dialog-payment"),
+    orderDialogItems: $("order-dialog-items"),
+    orderDialogTotal: $("order-dialog-total"),
+    reorderButton: $("reorder-button"),
+    toast: $("toast"),
+    toastTitle: $("toast-title"),
+    toastCopy: $("toast-copy")
+  };
+
+  function readSession() {
+    try {
+      return JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function saveSession(value) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(value));
+  }
+
+  function money(value) {
+    return new Intl.NumberFormat("en-SG", {
+      style: "currency",
+      currency: "SGD",
+      minimumFractionDigits: 2
+    }).format(Number(value || 0));
+  }
+
+  function normalizePhone(value) {
+    let digits = String(value || "").replace(/\D/g, "");
+
+    if (digits.startsWith("65") && digits.length >= 10) {
+      return digits;
+    }
+
+    if (digits.length === 8) {
+      return `65${digits}`;
+    }
+
+    return digits;
+  }
+
+  function initials(name) {
+    return String(name || "My FarmBox")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join("");
+  }
+
+  function formatDate(value) {
+    if (!value) return "—";
+
+    return new Intl.DateTimeFormat("en-SG", {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    }).format(new Date(value));
+  }
+
+  function showToast(title, copy) {
+    els.toastTitle.textContent = title;
+    els.toastCopy.textContent = copy;
+    els.toast.hidden = false;
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+      els.toast.hidden = true;
+    }, 2400);
+  }
+
+  function accountQuery(phone, email) {
+    const params = new URLSearchParams({
+      action: "getAccount",
+      phone: normalizePhone(phone || ""),
+      email: String(email || "").trim()
+    });
+
+    return `${API_URL}?${params.toString()}`;
+  }
+
+  async function loadAccount(phone, email) {
+    els.loginButton.disabled = true;
+    els.loginButton.textContent = "Opening Account…";
+    els.loginMessage.textContent = "";
+
+    try {
+      const response = await fetch(accountQuery(phone, email), {
+        cache: "no-store"
+      });
+
+      const data = await response.json();
+
+      if (!data.ok || !data.found) {
+        throw new Error(
+          data.message || "We couldn’t find a matching account."
+        );
+      }
+
+      account = data;
+
+      saveSession({
+        customerId: data.customer.customerId,
+        phoneKey: data.customer.phoneKey,
+        email: data.customer.email,
+        name: data.customer.name,
+        updatedAt: new Date().toISOString()
+      });
+
+      renderAccount();
+    } catch (error) {
+      els.loginMessage.textContent =
+        error.message || "Unable to open account.";
+    } finally {
+      els.loginButton.disabled = false;
+      els.loginButton.textContent = "Find My Account";
+    }
+  }
+
+  function renderAccount() {
+    const customer = account.customer || {};
+    const address = account.address || {};
+    const addresses = Array.isArray(account.addresses) ? account.addresses : (address.addressId ? [address] : []);
+    const orders = Array.isArray(account.orders)
+      ? account.orders
+      : [];
+
+    els.loginView.hidden = true;
+    els.accountView.hidden = false;
+
+    els.avatar.textContent = initials(customer.name);
+    els.heroName.textContent = customer.name || "Member";
+    els.heroCustomerId.textContent =
+      `Customer ID: ${customer.customerId || "—"}`;
+
+    els.statOrders.textContent =
+      Number(customer.orderCount || orders.length);
+    els.statSpent.textContent =
+      money(customer.totalSpent);
+    els.statUpcoming.textContent =
+      String(orders.filter(order => !["Delivered", "Cancelled", "Closed"].includes(order.orderStatus)).length);
+    els.statStatus.textContent =
+      customer.status || "Active";
+
+    els.profileName.textContent = customer.name || "—";
+    els.profilePhone.textContent = customer.phone || "—";
+    els.profileEmail.textContent = customer.email || "—";
+    els.profileAdults.textContent = Number(customer.adults || 0);
+    els.profileChildren.textContent = Number(customer.children || 0);
+
+    els.addressLabel.textContent = "Saved addresses";
+    renderAddressList(addresses);
+
+    const addressParts = [
+      address.addressLine,
+      address.unitNumber,
+      address.building,
+      address.postalCode
+        ? `Singapore ${address.postalCode}`
+        : ""
+    ].filter(Boolean);
+
+    els.addressDisplay.innerHTML =
+      addressParts.length
+        ? addressParts.map(part => `<div>${escapeHtml(part)}</div>`).join("")
+        : "<div>No saved address.</div>";
+
+    els.addressInstructions.textContent =
+      address.deliveryInstructions
+        ? `Delivery instructions: ${address.deliveryInstructions}`
+        : "";
+
+    renderSavedAddressMap(address.latLong || "");
+
+    renderOrders(orders);
+    renderUpcoming(orders);
+    prepareSupportLinks();
+  }
+
+  function renderAddressList(addresses) {
+    els.addressList.innerHTML = "";
+    addresses.forEach(address => {
+      const card = document.createElement("div");
+      const parts = [address.addressLine, address.unitNumber, address.building, address.postalCode ? `Singapore ${address.postalCode}` : ""].filter(Boolean);
+      card.className = "address-card";
+      card.innerHTML = `<div><small>${escapeHtml(address.label || "Address")}${address.isDefault ? " · Default" : ""}</small><strong>${escapeHtml(parts.join(", "))}</strong></div><div><button type="button" data-edit>Edit</button>${addresses.length > 1 ? '<button type="button" data-remove>Remove</button>' : ""}</div>`;
+      card.querySelector("[data-edit]").onclick = () => openAddressEditor(address);
+      card.querySelector("[data-remove]")?.addEventListener("click", () => removeAddress(address));
+      els.addressList.appendChild(card);
+    });
+  }
+
+  function renderUpcoming(orders) {
+    const upcoming = orders.find(
+      order =>
+        !["Delivered", "Cancelled", "Closed"].includes(
+          order.orderStatus
+        )
+    );
+
+    if (!upcoming) {
+      els.upcomingSection.hidden = true;
+      return;
+    }
+
+    els.upcomingSection.hidden = false;
+    els.upcomingOrderId.textContent = upcoming.orderId;
+    els.upcomingDelivery.textContent =
+      `${formatDate(upcoming.deliveryDate)} · 9:00 a.m.–9:00 p.m.`;
+    els.upcomingOrderStatus.textContent =
+      upcoming.orderStatus;
+    els.upcomingTotal.textContent =
+      money(upcoming.grandTotal);
+
+    els.upcomingViewButton.onclick = () =>
+      openOrder(upcoming.orderId);
+  }
+
+  function renderOrders(orders) {
+    els.ordersList.innerHTML = "";
+    els.ordersEmpty.hidden = orders.length > 0;
+
+    orders.forEach(order => {
+      const card = document.createElement("article");
+      card.className = "order-card";
+
+      card.innerHTML = `
+        <div class="order-main">
+          <strong>${escapeHtml(order.orderId)}</strong>
+          <small>${formatDate(order.orderDate)}</small>
+        </div>
+
+        <div class="order-meta">
+          <strong>${formatDate(order.deliveryDate)}</strong>
+          <small>${Number(order.itemCount || 0)} products</small>
+        </div>
+
+        <span class="order-status">${escapeHtml(order.orderStatus)}</span>
+
+        <div>
+          <strong>${money(order.grandTotal)}</strong>
+          <button type="button">View</button>
+        </div>
+      `;
+
+      card.querySelector("button").onclick = () =>
+        openOrder(order.orderId);
+
+      els.ordersList.appendChild(card);
+    });
+  }
+
+  async function openOrder(orderId) {
+    try {
+      const session = readSession();
+
+      const params = new URLSearchParams({
+        action: "getOrderDetails",
+        orderId,
+        customerId: session.customerId || ""
+      });
+
+      const response = await fetch(
+        `${API_URL}?${params.toString()}`,
+        { cache: "no-store" }
+      );
+
+      const data = await response.json();
+
+      if (!data.ok) {
+        throw new Error(
+          data.message || "Unable to open order."
+        );
+      }
+
+      selectedOrder = data;
+
+      els.orderDialogId.textContent =
+        data.order.orderId;
+      els.orderDialogDelivery.textContent =
+        formatDate(data.order.deliveryDate);
+      els.orderDialogStatus.textContent =
+        data.order.orderStatus;
+      els.orderDialogPayment.textContent =
+        data.order.paymentStatus;
+      els.orderDialogTotal.textContent =
+        money(data.order.grandTotal);
+
+      els.orderDialogItems.innerHTML = "";
+
+      data.items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "order-dialog-item";
+        row.innerHTML = `
+          <span>${Number(item.quantity)} × ${escapeHtml(displayName(item.productName))}</span>
+          <strong>${money(item.lineTotal)}</strong>
+        `;
+        els.orderDialogItems.appendChild(row);
+      });
+
+      els.orderDialog.showModal();
+    } catch (error) {
+      showToast(
+        "Order unavailable",
+        error.message || "Please try again."
+      );
+    }
+  }
+
+  function displayName(name) {
+    const raw = String(name || "Fresh produce");
+    const parts = raw.split(" - ");
+
+    return parts.length > 1
+      ? parts.slice(1).join(" - ").trim()
+      : raw;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function openProfileEditor() {
+    const customer = account.customer || {};
+
+    els.editName.value = customer.name || "";
+    els.editPhone.value = customer.phone || "";
+    els.editEmail.value = customer.email || "";
+    els.editAdults.value = Number(customer.adults || 0);
+    els.editChildren.value = Number(customer.children || 0);
+
+    els.profileDialog.showModal();
+  }
+
+
+  function deliveryPinIcon() {
+    return L.divIcon({
+      className: "mfb-map-pin-wrap",
+      html: '<div class="mfb-map-pin" aria-hidden="true"></div>',
+      iconSize: [34, 42],
+      iconAnchor: [17, 40],
+      popupAnchor: [0, -40]
+    });
+  }
+
+  function observeMapContainer(element, map, observerName) {
+    if (!element || !map || typeof ResizeObserver === "undefined") {
+      return null;
+    }
+
+    const observer = new ResizeObserver(entries => {
+      const entry = entries[0];
+
+      if (
+        entry &&
+        entry.contentRect.width > 120 &&
+        entry.contentRect.height > 120
+      ) {
+        window.requestAnimationFrame(() => {
+          map.invalidateSize({ animate: false, pan: false });
+        });
+      }
+    });
+
+    observer.observe(element);
+    return observer;
+  }
+
+  function settleMap(map, point, zoom = 17) {
+    if (!map) return;
+
+    const centre = Array.isArray(point) ? point : null;
+    let attempts = 0;
+
+    const settle = () => {
+      attempts += 1;
+
+      const container = map.getContainer();
+      const rect = container.getBoundingClientRect();
+
+      if (rect.width > 120 && rect.height > 120) {
+        map.invalidateSize({ animate: false, pan: false });
+
+        if (centre) {
+          map.setView(centre, zoom, { animate: false });
+        }
+
+        if (attempts < 8) {
+          window.setTimeout(settle, attempts * 90);
+        }
+      } else if (attempts < 20) {
+        window.requestAnimationFrame(settle);
+      }
+    };
+
+    settle();
+  }
+
+  function addOpenStreetMapTiles(map) {
+    return L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+        tileSize: 256,
+        updateWhenIdle: false,
+        keepBuffer: 4,
+        crossOrigin: true,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }
+    ).addTo(map);
+  }
+
+  function renderSavedAddressMap(latLong) {
+    const point = parseLatLong(latLong);
+
+    if (!point || !els.savedAddressMap) {
+      els.savedLocationWrap.hidden = true;
+      return;
+    }
+
+    const [lat, lng] = point;
+    const delta = 0.006;
+
+    const left = lng - delta;
+    const bottom = lat - delta;
+    const right = lng + delta;
+    const top = lat + delta;
+
+    const params = new URLSearchParams({
+      bbox: `${left},${bottom},${right},${top}`,
+      layer: "mapnik",
+      marker: `${lat},${lng}`
+    });
+
+    els.savedLocationWrap.hidden = false;
+    els.savedLocationCoordinates.textContent =
+      formatLatLong(lat, lng);
+
+    els.savedAddressMap.src =
+      `https://www.openstreetmap.org/export/embed.html?${params.toString()}`;
+  }
+
+  async function reverseGeocodeLocation(lat, lng) {
+    if (geocodeController) {
+      geocodeController.abort();
+    }
+
+    geocodeController = new AbortController();
+
+    const url = new URL(
+      "https://nominatim.openstreetmap.org/reverse"
+    );
+
+    url.search = new URLSearchParams({
+      format: "jsonv2",
+      lat: String(lat),
+      lon: String(lng),
+      zoom: "18",
+      addressdetails: "1",
+      "accept-language": "en"
+    }).toString();
+
+    const response = await fetch(url, {
+      signal: geocodeController.signal,
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Address lookup failed.");
+    }
+
+    return response.json();
+  }
+
+  async function forwardGeocodeAddress(query) {
+    if (geocodeController) {
+      geocodeController.abort();
+    }
+
+    geocodeController = new AbortController();
+
+    const url = new URL(
+      "https://nominatim.openstreetmap.org/search"
+    );
+
+    url.search = new URLSearchParams({
+      format: "jsonv2",
+      q: query,
+      limit: "1",
+      countrycodes: "sg",
+      addressdetails: "1",
+      "accept-language": "en"
+    }).toString();
+
+    const response = await fetch(url, {
+      signal: geocodeController.signal,
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Address lookup failed.");
+    }
+
+    const data = await response.json();
+    return data[0] || null;
+  }
+
+  function addressFromGeocode(result) {
+    const details = result?.address || {};
+
+    const lineParts = [
+      details.house_number,
+      details.road ||
+        details.pedestrian ||
+        details.residential ||
+        details.neighbourhood,
+      details.suburb ||
+        details.quarter ||
+        details.city_district,
+      details.city || details.town || details.village,
+      details.state
+    ].filter(Boolean);
+
+    return {
+      addressLine:
+        result?.display_name ||
+        lineParts.join(", "),
+      postalCode:
+        details.postcode || "",
+      label:
+        details.suburb ||
+        details.neighbourhood ||
+        details.city_district ||
+        details.city ||
+        "Home"
+    };
+  }
+
+  async function updateAddressFromPin(lat, lng) {
+    try {
+      els.mapStatus.textContent =
+        "Finding the address for this pin…";
+      els.mapStatus.className = "";
+
+      const result = await reverseGeocodeLocation(lat, lng);
+      const address = addressFromGeocode(result);
+
+      if (address.addressLine) {
+        els.editAddressLine.value = address.addressLine;
+      }
+
+      if (address.postalCode) {
+        els.editPostalCode.value =
+          String(address.postalCode).replace(/\D/g, "").slice(0, 6);
+      }
+
+      if (
+        address.label &&
+        !els.editPlaceName.value.trim()
+      ) {
+        els.editPlaceName.value = address.label;
+      }
+
+      updateMapFields(
+        lat,
+        lng,
+        "Pin and address updated."
+      );
+    } catch (error) {
+      if (error.name === "AbortError") return;
+
+      updateMapFields(
+        lat,
+        lng,
+        "Pin saved. Please verify the written address."
+      );
+    }
+  }
+
+  function parseLatLong(value) {
+    const parts = String(value || "")
+      .split(",")
+      .map(part => Number(part.trim()));
+
+    if (
+      parts.length !== 2 ||
+      !Number.isFinite(parts[0]) ||
+      !Number.isFinite(parts[1])
+    ) {
+      return null;
+    }
+
+    const [lat, lng] = parts;
+
+    if (
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180
+    ) {
+      return null;
+    }
+
+    return [lat, lng];
+  }
+
+  function formatLatLong(lat, lng) {
+    return `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
+  }
+
+  function updateMapFields(lat, lng, message = "Delivery pin selected.") {
+    const value = formatLatLong(lat, lng);
+
+    els.editLatLong.value = value;
+    els.mapCoordinates.textContent = value;
+    els.mapStatus.textContent = message;
+    els.mapStatus.className = "ready";
+  }
+
+  function setMapError(message) {
+    els.mapStatus.textContent = message;
+    els.mapStatus.className = "error";
+  }
+
+  function createOrMoveMarker(lat, lng, message) {
+    if (!addressMap) return;
+
+    const point = [lat, lng];
+
+    if (!addressMarker) {
+      addressMarker = L.marker(point, {
+        draggable: true,
+        autoPan: true,
+        icon: deliveryPinIcon()
+      }).addTo(addressMap);
+
+      addressMarker.on("dragend", event => {
+        const position = event.target.getLatLng();
+
+        updateMapFields(
+          position.lat,
+          position.lng,
+          "Delivery pin updated."
+        );
+
+        updateAddressFromPin(
+          position.lat,
+          position.lng
+        );
+      });
+    } else {
+      addressMarker.setLatLng(point);
+    }
+
+    const currentZoom = addressMap.getZoom();
+    
+    const targetZoom = Number.isFinite(currentZoom)
+      ? Math.max(currentZoom, 17)
+      : 17;
+    
+    addressMap.setView(
+      point,
+      targetZoom,
+      { animate: false }
+    );
+    
+    updateMapFields(lat, lng, message);
+  }
+
+  function destroyAddressMap() {
+    if (addressMapObserver) {
+      addressMapObserver.disconnect();
+      addressMapObserver = null;
+    }
+
+    if (addressMap) {
+      addressMap.off();
+      addressMap.remove();
+      addressMap = null;
+    }
+
+    addressMarker = null;
+
+    if (els.addressMap) {
+      els.addressMap.innerHTML = "";
+      els.addressMap.removeAttribute("style");
+      els.addressMap.className = "";
+    }
+  }
+
+  function initialiseAddressMap(savedLatLong) {
+    if (typeof L === "undefined") {
+      setMapError(
+        "The map could not be loaded. You can still save the written address."
+      );
+      return;
+    }
+
+    destroyAddressMap();
+
+    const saved = parseLatLong(savedLatLong);
+    const initial = saved || DEFAULT_MAP_CENTER;
+
+    const buildMap = () => {
+      const rect = els.addressMap.getBoundingClientRect();
+
+      if (rect.width < 200 || rect.height < 200) {
+        window.setTimeout(buildMap, 80);
+        return;
+      }
+
+      addressMap = L.map(els.addressMap, {
+        zoomControl: true,
+        attributionControl: true,
+        tap: true,
+        dragging: true,
+        scrollWheelZoom: true
+      });
+
+      addOpenStreetMapTiles(addressMap);
+
+      addressMapObserver = observeMapContainer(
+        els.addressMap,
+        addressMap,
+        "edit"
+      );
+
+      addressMap.on("click", event => {
+        createOrMoveMarker(
+          event.latlng.lat,
+          event.latlng.lng,
+          "Delivery pin moved."
+        );
+
+        updateAddressFromPin(
+          event.latlng.lat,
+          event.latlng.lng
+        );
+      });
+
+      if (saved) {
+        addressMap.setView(
+          saved,
+          17,
+          { animate: false }
+        );
+      
+        createOrMoveMarker(
+          saved[0],
+          saved[1],
+          "Saved delivery pin loaded."
+        );
+      }
+      else {
+        addressMap.setView(initial, 11, { animate: false });
+        els.editLatLong.value = "";
+        els.mapCoordinates.textContent = "";
+        els.mapStatus.textContent =
+          "Tap the map, find the written address, or use your current location.";
+        els.mapStatus.className = "";
+      }
+
+      window.setTimeout(() => {
+        addressMap.invalidateSize({ animate: false });
+        addressMap.setView(
+          saved || initial,
+          saved ? 17 : 11,
+          { animate: false }
+        );
+      }, 120);
+
+      window.setTimeout(() => {
+        addressMap.invalidateSize({ animate: false });
+      }, 420);
+    };
+
+    window.setTimeout(buildMap, 120);
+  }
+
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setMapError("Current location is not supported on this device.");
+      return;
+    }
+
+    els.useCurrentLocation.disabled = true;
+    els.useCurrentLocation.textContent = "Finding Location…";
+    els.mapStatus.textContent = "Requesting your current location…";
+    els.mapStatus.className = "";
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        createOrMoveMarker(
+          position.coords.latitude,
+          position.coords.longitude,
+          "Current location selected. Drag the pin if needed."
+        );
+
+        updateAddressFromPin(
+          position.coords.latitude,
+          position.coords.longitude
+        );
+
+        els.useCurrentLocation.disabled = false;
+        els.useCurrentLocation.textContent = "Use Current Location";
+      },
+      error => {
+        const messages = {
+          1: "Location permission was denied.",
+          2: "Your location is currently unavailable.",
+          3: "Location request timed out."
+        };
+
+        setMapError(
+          messages[error.code] ||
+          "We could not find your current location."
+        );
+
+        els.useCurrentLocation.disabled = false;
+        els.useCurrentLocation.textContent = "Use Current Location";
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 60000
+      }
+    );
+  }
+
+  async function findWrittenAddress() {
+    const query = [
+      els.editAddressLine.value.trim(),
+      els.editPostalCode.value.trim(),
+      "Singapore"
+    ].filter(Boolean).join(", ");
+
+    if (!query || query === "Singapore") {
+      setMapError("Enter an address or postal code first.");
+      return;
+    }
+
+    els.findWrittenAddress.disabled = true;
+    els.findWrittenAddress.textContent = "Finding…";
+    els.mapStatus.textContent =
+      "Finding this address on the map…";
+    els.mapStatus.className = "";
+
+    try {
+      const result = await forwardGeocodeAddress(query);
+
+      if (!result) {
+        throw new Error("Address not found.");
+      }
+
+      const lat = Number(result.lat);
+      const lng = Number(result.lon);
+      const address = addressFromGeocode(result);
+
+      createOrMoveMarker(
+        lat,
+        lng,
+        "Address found. Drag the pin to the exact entrance."
+      );
+
+      if (address.addressLine) {
+        els.editAddressLine.value = address.addressLine;
+      }
+
+      if (address.postalCode) {
+        els.editPostalCode.value =
+          String(address.postalCode).replace(/\D/g, "").slice(0, 6);
+      }
+
+      settleMap(addressMap, [lat, lng], 17);
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setMapError(
+          "We could not find that address. Try the postal code or place the pin manually."
+        );
+      }
+    } finally {
+      els.findWrittenAddress.disabled = false;
+      els.findWrittenAddress.textContent = "Find This Address";
+    }
+  }
+
+  function openAddressEditor(address = {}) {
+    editingAddressId = address.addressId || "";
+    els.editAddressLabel.value = ["Home", "Office", "Friend / Family", "Other"].includes(address.label) ? address.label : "Other";
+
+    els.editAddressLine.value =
+      address.addressLine || "";
+    els.editUnitNumber.value =
+      address.unitNumber || "";
+    els.editBuilding.value =
+      address.building || "";
+    els.editPostalCode.value =
+      address.postalCode || "";
+    els.editPlaceName.value =
+      address.placeName || address.label || "Home";
+    els.editDeliveryInstructions.value =
+      address.deliveryInstructions || "";
+    els.editLatLong.value =
+      address.latLong || "";
+
+    els.addressDialog.showModal();
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        initialiseAddressMap(address.latLong || "");
+      });
+    });
+  }
+
+  async function postAction(payload) {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(data.message || "Update failed.");
+    }
+
+    return data;
+  }
+
+  async function saveProfile() {
+    try {
+      await postAction({
+        action: "updateCustomer",
+        customerId: account.customer.customerId,
+        customer: {
+          name: els.editName.value.trim(),
+          phone: els.editPhone.value.trim(),
+          email: els.editEmail.value.trim(),
+          adults: Number(els.editAdults.value || 0),
+          children: Number(els.editChildren.value || 0)
+        }
+      });
+
+      els.profileDialog.close();
+
+      await loadAccount(
+        els.editPhone.value,
+        els.editEmail.value
+      );
+
+      showToast(
+        "Profile updated",
+        "Your customer information has been saved."
+      );
+    } catch (error) {
+      showToast(
+        "Profile not updated",
+        error.message || "Please try again."
+      );
+    }
+  }
+
+  async function saveAddress() {
+    try {
+      await postAction({
+        action: "updateAddress",
+        customerId: account.customer.customerId,
+        addressId: editingAddressId,
+        address: {
+          label: els.editAddressLabel.value,
+          addressLine: els.editAddressLine.value.trim(),
+          unitNumber: els.editUnitNumber.value.trim(),
+          building: els.editBuilding.value.trim(),
+          postalCode: els.editPostalCode.value.trim(),
+          placeName: els.editPlaceName.value.trim(),
+          deliveryInstructions:
+            els.editDeliveryInstructions.value.trim(),
+          latLong: els.editLatLong.value.trim(),
+          makeDefault: !account.addresses?.length || Boolean(account.addresses?.find(item => item.addressId === editingAddressId)?.isDefault)
+        }
+      });
+
+      els.addressDialog.close();
+
+      await loadAccount(
+        account.customer.phone,
+        account.customer.email
+      );
+
+      showToast(
+        "Address updated",
+        "Your delivery address has been saved."
+      );
+    } catch (error) {
+      showToast(
+        "Address not updated",
+        error.message || "Please try again."
+      );
+    }
+  }
+
+  async function removeAddress(address) {
+    if (!window.confirm(`Remove ${address.label || "this"} address?`)) return;
+    try {
+      await postAction({ action: "deleteAddress", customerId: account.customer.customerId, addressId: address.addressId });
+      await loadAccount(account.customer.phone, account.customer.email);
+      showToast("Address removed", "This address is no longer available for delivery.");
+    } catch (error) { showToast("Address not removed", error.message || "Please try again."); }
+  }
+
+  function reorder() {
+    if (!selectedOrder?.items?.length) return;
+
+    const cart = selectedOrder.items.map(item => ({
+      productId: item.productId,
+      productName: item.productName,
+      tanglish: "",
+      collection: "",
+      imageUrl: "",
+      unitLabel: item.unitLabel,
+      unitValue: Number(item.unitValue),
+      unitType: item.unitType,
+      unitPrice: Number(item.unitPrice),
+      quantity: Number(item.quantity),
+      minQuantity: 1,
+      maxQuantity: 99,
+      incrementBy: 1
+    }));
+
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+
+    if (typeof window.updateSharedCartCount === "function") {
+      window.updateSharedCartCount();
+    }
+
+    window.location.href = "/cart/";
+  }
+
+  function prepareSupportLinks() {
+    const phone =
+      account.settings?.supportPhone ||
+      "+65 8958 2110";
+
+    const digits = phone.replace(/\D/g, "");
+
+    els.supportWhatsapp.href =
+      `https://wa.me/${digits}`;
+    els.supportCall.href =
+      `tel:+${digits}`;
+  }
+
+  function logout() {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem("mfb_sg_auth_user_v1");
+    window.MFBAuth?.signOut();
+    account = null;
+    els.accountView.hidden = true;
+    els.loginView.hidden = false;
+    els.loginMessage.textContent = "";
+  }
+
+  async function initialise() {
+    const user = await window.MFBAuth?.getUser();
+    if (user?.email) {
+      localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ email: user.email }));
+      els.loginEmail.value = user.email;
+      await loadAccount("", user.email);
+      return;
+    }
+
+    const authHint = readJson("mfb_sg_auth_user_v1", {});
+    if (authHint.email) {
+      els.loginEmail.value = authHint.email;
+      await loadAccount("", authHint.email);
+      return;
+    }
+    const session = readSession();
+
+    if (session.phoneKey || session.email) {
+      els.loginPhone.value = session.phoneKey || "";
+      els.loginEmail.value = session.email || "";
+
+      await loadAccount(
+        session.phoneKey,
+        session.email
+      );
+    }
+  }
+
+  window.MFBAuth?.onChange(user => {
+    if (!user?.email || account) return;
+
+    localStorage.setItem(
+      "mfb_sg_auth_user_v1",
+      JSON.stringify({ email: user.email })
+    );
+
+    els.loginEmail.value = user.email;
+    loadAccount("", user.email);
+  });
+
+  els.loginButton.onclick = () =>
+    loadAccount(
+      els.loginPhone.value,
+      els.loginEmail.value
+    );
+
+  els.googleLogin.onclick = async () => {
+    els.googleLogin.disabled = true;
+    els.googleLogin.textContent = "Opening Google…";
+    try {
+      await window.MFBAuth.signInWithGoogle(`${window.location.origin}/checkout/`);
+    } catch (error) {
+      els.authMessage.textContent = error.message || "Google sign-in could not start.";
+      els.googleLogin.disabled = false;
+      els.googleLogin.textContent = "Continue with Google";
+    }
+  };
+
+  els.magicLogin.onclick = async () => {
+    const email = els.magicEmail.value.trim();
+    if (!els.magicEmail.validity.valid || !email) {
+      els.authMessage.textContent = "Enter a valid email address.";
+      return;
+    }
+    els.magicLogin.disabled = true;
+    els.magicLogin.textContent = "Sending…";
+    try {
+      await window.MFBAuth.sendMagicLink(email, `${window.location.origin}/checkout/`);
+      els.authMessage.textContent = "Check your email and open the sign-in link.";
+    } catch (error) {
+      els.authMessage.textContent = error.message || "We could not send the sign-in link.";
+    } finally {
+      els.magicLogin.disabled = false;
+      els.magicLogin.textContent = "Send link";
+    }
+  };
+
+  els.loginPhone.onkeydown = event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      els.loginButton.click();
+    }
+  };
+
+  $("edit-profile-button").onclick = openProfileEditor;
+  $("edit-profile-button-2").onclick = openProfileEditor;
+  els.addAddress.onclick = () => openAddressEditor({});
+  $("logout-button").onclick = logout;
+
+  $("cancel-profile").onclick = () =>
+    els.profileDialog.close();
+  $("cancel-address").onclick = () =>
+    els.addressDialog.close();
+
+  $("save-profile").onclick = saveProfile;
+  $("save-address").onclick = saveAddress;
+  els.useCurrentLocation.onclick = useCurrentLocation;
+  els.findWrittenAddress.onclick = findWrittenAddress;
+
+  $("close-order-dialog").onclick = () =>
+    els.orderDialog.close();
+
+  els.reorderButton.onclick = reorder;
+
+  initialise();
+})();
