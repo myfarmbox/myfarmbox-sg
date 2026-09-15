@@ -101,6 +101,15 @@
     }
   }
 
+  function readJson(key, fallback) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || "");
+      return value ?? fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
   function saveSession(value) {
     localStorage.setItem(SESSION_KEY, JSON.stringify(value));
   }
