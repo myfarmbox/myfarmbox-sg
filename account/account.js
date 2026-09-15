@@ -14,6 +14,7 @@
   let addressMarker = null;
   let addressMapObserver = null;
   let geocodeController = null;
+  let editingAddressId = "";
   const DEFAULT_MAP_CENTER = [1.3521, 103.8198];
 
   const $ = id => document.getElementById(id);
@@ -50,6 +51,8 @@
     addressLabel: $("address-label"),
     addressDisplay: $("address-display"),
     addressInstructions: $("address-instructions"),
+    addressList: $("address-list"),
+    addAddress: $("add-address-button"),
     ordersList: $("orders-list"),
     ordersEmpty: $("orders-empty"),
     supportWhatsapp: $("support-whatsapp"),
@@ -63,6 +66,7 @@
     editAdults: $("edit-adults"),
     editChildren: $("edit-children"),
     editAddressLine: $("edit-address-line"),
+    editAddressLabel: $("edit-address-label"),
     editUnitNumber: $("edit-unit-number"),
     editBuilding: $("edit-building"),
     editPostalCode: $("edit-postal-code"),
@@ -205,6 +209,7 @@
   function renderAccount() {
     const customer = account.customer || {};
     const address = account.address || {};
+    const addresses = Array.isArray(account.addresses) ? account.addresses : (address.addressId ? [address] : []);
     const orders = Array.isArray(account.orders)
       ? account.orders
       : [];
@@ -232,8 +237,8 @@
     els.profileAdults.textContent = Number(customer.adults || 0);
     els.profileChildren.textContent = Number(customer.children || 0);
 
-    els.addressLabel.textContent =
-      address.label || "Home";
+    els.addressLabel.textContent = "Saved addresses";
+    renderAddressList(addresses);
 
     const addressParts = [
       address.addressLine,
@@ -259,6 +264,19 @@
     renderOrders(orders);
     renderUpcoming(orders);
     prepareSupportLinks();
+  }
+
+  function renderAddressList(addresses) {
+    els.addressList.innerHTML = "";
+    addresses.forEach(address => {
+      const card = document.createElement("div");
+      const parts = [address.addressLine, address.unitNumber, address.building, address.postalCode ? `Singapore ${address.postalCode}` : ""].filter(Boolean);
+      card.className = "address-card";
+      card.innerHTML = `<div><small>${escapeHtml(address.label || "Address")}${address.isDefault ? " · Default" : ""}</small><strong>${escapeHtml(parts.join(", "))}</strong></div><div><button type="button" data-edit>Edit</button>${addresses.length > 1 ? '<button type="button" data-remove>Remove</button>' : ""}</div>`;
+      card.querySelector("[data-edit]").onclick = () => openAddressEditor(address);
+      card.querySelector("[data-remove]")?.addEventListener("click", () => removeAddress(address));
+      els.addressList.appendChild(card);
+    });
   }
 
   function renderUpcoming(orders) {
@@ -965,8 +983,9 @@
     }
   }
 
-  function openAddressEditor() {
-    const address = account.address || {};
+  function openAddressEditor(address = {}) {
+    editingAddressId = address.addressId || "";
+    els.editAddressLabel.value = ["Home", "Office", "Friend / Family", "Other"].includes(address.label) ? address.label : "Other";
 
     els.editAddressLine.value =
       address.addressLine || "";
@@ -1045,9 +1064,9 @@
       await postAction({
         action: "updateAddress",
         customerId: account.customer.customerId,
-        addressId: account.address?.addressId || "",
+        addressId: editingAddressId,
         address: {
-          label: els.editPlaceName.value.trim() || "Home",
+          label: els.editAddressLabel.value,
           addressLine: els.editAddressLine.value.trim(),
           unitNumber: els.editUnitNumber.value.trim(),
           building: els.editBuilding.value.trim(),
@@ -1055,7 +1074,8 @@
           placeName: els.editPlaceName.value.trim(),
           deliveryInstructions:
             els.editDeliveryInstructions.value.trim(),
-          latLong: els.editLatLong.value.trim()
+          latLong: els.editLatLong.value.trim(),
+          makeDefault: !account.addresses?.length || Boolean(account.addresses?.find(item => item.addressId === editingAddressId)?.isDefault)
         }
       });
 
@@ -1076,6 +1096,15 @@
         error.message || "Please try again."
       );
     }
+  }
+
+  async function removeAddress(address) {
+    if (!window.confirm(`Remove ${address.label || "this"} address?`)) return;
+    try {
+      await postAction({ action: "deleteAddress", customerId: account.customer.customerId, addressId: address.addressId });
+      await loadAccount(account.customer.phone, account.customer.email);
+      showToast("Address removed", "This address is no longer available for delivery.");
+    } catch (error) { showToast("Address not removed", error.message || "Please try again."); }
   }
 
   function reorder() {
@@ -1196,7 +1225,7 @@
 
   $("edit-profile-button").onclick = openProfileEditor;
   $("edit-profile-button-2").onclick = openProfileEditor;
-  $("edit-address-button").onclick = openAddressEditor;
+  els.addAddress.onclick = () => openAddressEditor({});
   $("logout-button").onclick = logout;
 
   $("cancel-profile").onclick = () =>

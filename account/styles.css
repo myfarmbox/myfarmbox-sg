@@ -5,6 +5,12 @@
 [hidden] {
   display: none !important;
 }
+.address-list { display: grid; gap: 10px; }
+.address-card { display:flex; justify-content:space-between; gap:12px; padding:13px; border:1px solid var(--mfb-border); border-radius:12px; }
+.address-card small,.address-card strong { display:block; }
+.address-card small { color:var(--mfb-green); font-size:11px; font-weight:800; text-transform:uppercase; }
+.address-card strong { margin-top:4px; font-size:13px; line-height:1.45; }
+.address-card button { border:0; background:transparent; color:var(--mfb-green-dark); font:inherit; font-size:12px; font-weight:700; text-decoration:underline; cursor:pointer; }
 
 .account-auth-actions { margin: 24px 0 4px; }
 .primary-login, .account-magic-row button { min-height: 48px; border: 0; border-radius: 10px; background: var(--mfb-green); color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }

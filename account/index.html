@@ -129,11 +129,12 @@
               <p class="eyebrow">Delivery Address</p>
               <h2 id="address-label">Home</h2>
             </div>
-            <button id="edit-address-button" type="button">Edit</button>
+            <button id="add-address-button" type="button">Add address</button>
           </div>
 
-          <address id="address-display"></address>
-          <p id="address-instructions"></p>
+          <div id="address-list" class="address-list"></div>
+          <address id="address-display" hidden></address>
+          <p id="address-instructions" hidden></p>
 
           <div id="saved-location-wrap" class="saved-location-wrap" hidden>
             <div class="saved-location-heading">
@@ -224,6 +225,7 @@
       </div>
 
       <div class="form-grid">
+        <label><span>Address tag</span><select id="edit-address-label"><option>Home</option><option>Office</option><option>Friend / Family</option><option>Other</option></select></label>
         <label class="full"><span>Address</span><textarea id="edit-address-line" rows="3" required></textarea></label>
 
         <div class="full map-section">
