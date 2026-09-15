@@ -7,6 +7,8 @@
   const CART_KEY = "mfb_sg_cart_v1";
   const DRAFT_KEY = "mfb_sg_checkout_draft_v1";
   const CUSTOMER_SESSION_KEY = "mfb_sg_customer_session_v1";
+  const PRODUCTS_CACHE_KEY = "mfb_sg_products_checkout_cache_v1";
+  const PRODUCTS_CACHE_TTL_MS = 60 * 1000;
 
   const state = {
     cart: [],
@@ -90,6 +92,24 @@
 
   function writeJson(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function readFreshProductsCache() {
+    const cache = readJson(PRODUCTS_CACHE_KEY, null);
+    if (!cache || !cache.data || Date.now() - Number(cache.savedAt || 0) > PRODUCTS_CACHE_TTL_MS) return null;
+    return cache.data;
+  }
+
+  async function getProductsForCheckout() {
+    const cached = readFreshProductsCache();
+    if (cached) return cached;
+    const response = await fetch(`${API_URL}?action=getProducts`, { cache: "no-store" });
+    const data = await response.json();
+    if (!data.ok || !Array.isArray(data.products)) {
+      throw new Error("We couldn’t validate the current harvest.");
+    }
+    writeJson(PRODUCTS_CACHE_KEY, { savedAt: Date.now(), data });
+    return data;
   }
 
   function currency(value) {
@@ -501,6 +521,7 @@
     els.lookupMessage.textContent = "";
 
     try {
+      window.showMfbLoader?.("Finding your saved profile…");
       const response = await fetch(
         `${API_URL}?action=lookupCustomer&phone=${encodeURIComponent(phone)}`,
         { cache: "no-store" }
@@ -534,6 +555,7 @@
         error.message || "We couldn’t look up your profile.";
       els.lookupMessage.className = "form-message error";
     } finally {
+      window.hideMfbLoader?.();
       els.lookupButton.disabled = false;
       els.lookupButton.textContent = "Find My Profile";
     }
@@ -548,6 +570,7 @@
     localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ email: user.email }));
 
     try {
+      window.showMfbLoader?.("Loading your saved delivery details…");
       const response = await fetch(`${API_URL}?action=getAccount&phone=&email=${encodeURIComponent(user.email)}`, { cache: "no-store" });
       const data = await response.json();
       if (data.ok && data.found) {
@@ -563,14 +586,17 @@
       populateProfile({ found: false, source: "New Customer", customer: { email: user.email }, address: {} });
       els.lookupMessage.textContent = "Add your delivery details to continue.";
       els.lookupMessage.className = "form-message";
+    } finally {
+      window.hideMfbLoader?.();
     }
   }
 
   async function startGoogleLogin() {
     els.googleLogin.disabled = true;
     els.googleLogin.textContent = "Opening Google…";
-    try { await window.MFBAuth.signInWithGoogle(); }
+    try { window.showMfbLoader?.("Opening secure Google sign-in…"); await window.MFBAuth.signInWithGoogle(); }
     catch (error) {
+      window.hideMfbLoader?.();
       els.authMessage.textContent = error.message || "Google sign-in could not start.";
       els.authMessage.className = "form-message error";
       els.googleLogin.disabled = false;
@@ -588,6 +614,7 @@
     els.magicLogin.disabled = true;
     els.magicLogin.textContent = "Sending…";
     try {
+      window.showMfbLoader?.("Sending your secure sign-in link…");
       await window.MFBAuth.sendMagicLink(email);
       els.authMessage.textContent = "Check your email and open the sign-in link to return here.";
       els.authMessage.className = "form-message success";
@@ -595,6 +622,7 @@
       els.authMessage.textContent = error.message || "We could not send the sign-in link.";
       els.authMessage.className = "form-message error";
     } finally {
+      window.hideMfbLoader?.();
       els.magicLogin.disabled = false;
       els.magicLogin.textContent = "Send link";
     }
@@ -615,16 +643,7 @@
       throw new Error("Your harvest basket is empty.");
     }
 
-    const response = await fetch(
-      `${API_URL}?action=getProducts`,
-      { cache: "no-store" }
-    );
-
-    const data = await response.json();
-
-    if (!data.ok || !Array.isArray(data.products)) {
-      throw new Error("We couldn’t validate the current harvest.");
-    }
+    const data = await getProductsForCheckout();
 
     const productMap = new Map(
       data.products.map(product => [
