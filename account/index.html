@@ -4,304 +4,314 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#438d35">
-  <meta name="description" content="View your profile, delivery address and harvest history with MyFarmBox Singapore.">
-  <title>My Account — MyFarmBox Singapore</title>
+  <meta name="description" content="Confirm your MyFarmBox Singapore harvest and delivery details.">
+  <title>Confirm Harvest — MyFarmBox Singapore</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/shared.css?v=22">
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <link rel="stylesheet" href="/shared.css?v=23">
+  <link rel="stylesheet" href="styles.css?v=53">
 </head>
 <body>
   <div id="site-header"></div>
 
-  <main class="shell">
-    <section id="login-view" class="login-card">
-      <div class="login-mark">🌿</div>
-      <p class="eyebrow">My Account</p>
-      <h1>Welcome back.</h1>
-      <p>Sign in once to see your saved delivery address, orders and harvest details.</p>
-
-      <div class="account-auth-actions">
-        <button id="account-google-login" type="button" class="primary-login">Continue with Google</button>
-        <div class="account-auth-divider"><span>or email me a sign-in link</span></div>
-        <div class="account-magic-row">
-          <input id="account-magic-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address">
-          <button id="account-magic-login" type="button">Send link</button>
-        </div>
-        <p id="account-auth-message" class="form-message"></p>
+  <main class="page-shell">
+    <header class="page-heading">
+      <div>
+        <p class="eyebrow">Confirm Harvest</p>
+        <h1>Review and confirm your harvest.</h1>
+        <p class="lead">Check your details, delivery and payment preference. It only takes a moment.</p>
       </div>
 
-      <details class="manual-account-lookup">
-        <summary>Use my mobile number and email instead</summary>
+      <a href="/cart/" class="back-link">← Back to My Harvest</a>
+    </header>
 
-      <div class="login-grid">
-        <label>
-          <span>Mobile number</span>
-          <input id="login-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+65 8958 2110">
-        </label>
-
-        <label>
-          <span>Email</span>
-          <input id="login-email" type="email" autocomplete="email" placeholder="you@example.com">
-        </label>
+    <section id="guard-state" class="message-card">
+      <span class="loader"></span>
+      <div>
+        <strong>Checking your harvest…</strong>
+        <small>Confirming minimum quantity, prices and availability.</small>
       </div>
-
-      <button id="login-button" type="button">Find My Account</button>
-      <p id="login-message" class="form-message"></p>
-      </details>
     </section>
 
-    <section id="account-view" hidden>
-      <header class="account-hero">
-        <div class="avatar" id="avatar">MF</div>
+    <section id="empty-state" class="empty-state" hidden>
+      <span aria-hidden="true">🌿</span>
+      <h2>Your harvest is not ready yet.</h2>
+      <p id="empty-message">Please return to your basket and complete the 5 kg equivalent minimum.</p>
+      <a href="/cart/">Review My Harvest →</a>
+    </section>
 
-        <div class="hero-copy">
-          <p class="eyebrow">Founding Harvest Member</p>
-          <h1>Hello, <span id="hero-name">Member</span>.</h1>
-          <p id="hero-customer-id"></p>
-        </div>
-
-        <div class="hero-actions">
-          <button id="edit-profile-button" type="button">Edit Profile</button>
-          <button id="logout-button" type="button" class="secondary">Switch Account</button>
-        </div>
-      </header>
-
-      <section class="stats-grid">
-        <article>
-          <small>Orders</small>
-          <strong id="stat-orders">0</strong>
-        </article>
-        <article>
-          <small>Total spent</small>
-          <strong id="stat-spent">S$0.00</strong>
-        </article>
-        <article>
-          <small>Upcoming</small>
-          <strong id="stat-upcoming">0</strong>
-        </article>
-        <article>
-          <small>Status</small>
-          <strong id="stat-status">Active</strong>
-        </article>
-      </section>
-
-      <section id="upcoming-section" class="upcoming-card" hidden>
-        <div>
-          <p class="eyebrow">Upcoming Harvest</p>
-          <h2 id="upcoming-order-id"></h2>
-          <p id="upcoming-delivery"></p>
-        </div>
-
-        <div class="upcoming-meta">
-          <span id="upcoming-order-status"></span>
-          <strong id="upcoming-total"></strong>
-          <button id="upcoming-view-button" type="button">View Order</button>
-        </div>
-      </section>
-
-      <section class="dashboard-grid">
-        <article class="panel profile-panel">
-          <div class="panel-heading">
+    <section id="checkout-layout" class="checkout-layout" hidden>
+      <div class="checkout-main">
+        <section class="step-card active" data-step-card="1">
+          <header class="step-heading">
+            <span>01</span>
             <div>
-              <p class="eyebrow">Profile</p>
-              <h2>Your information</h2>
+              <small>Faster checkout</small>
+              <h2>Sign in for a faster checkout.</h2>
+              <p>Returning members can select a saved delivery address and continue to payment.</p>
             </div>
-            <button id="edit-profile-button-2" type="button">Edit</button>
+          </header>
+
+          <div id="auth-signed-out" class="auth-signed-out">
+            <button id="google-login-button" class="google-login-button" type="button">
+              <span aria-hidden="true">G</span> Continue with Google
+            </button>
+            <div class="auth-divider"><span>or email me a sign-in link</span></div>
+            <div class="magic-link-row">
+              <input id="magic-link-email" type="email" autocomplete="email" placeholder="you@email.com" aria-label="Email address">
+              <button id="magic-link-button" type="button">Send link</button>
+            </div>
+            <p id="auth-message" class="form-message" aria-live="polite"></p>
+            <button id="guest-checkout-button" class="guest-checkout-button" type="button">Continue without signing in</button>
           </div>
 
-          <dl>
-            <div><dt>Name</dt><dd id="profile-name"></dd></div>
-            <div><dt>Mobile</dt><dd id="profile-phone"></dd></div>
-            <div><dt>Email</dt><dd id="profile-email"></dd></div>
-            <div><dt>Adults</dt><dd id="profile-adults"></dd></div>
-            <div><dt>Children</dt><dd id="profile-children"></dd></div>
-          </dl>
-        </article>
+          <div id="auth-signed-in" class="auth-signed-in" hidden>
+            <div class="profile-mark" aria-hidden="true">✓</div>
+            <div><small>Signed in securely</small><strong id="auth-user-email"></strong><span>We’re loading your saved delivery details.</span></div>
+            <button id="sign-out-button" type="button">Sign out</button>
+          </div>
 
-        <article class="panel address-panel">
-          <div class="panel-heading">
+          <div id="guest-lookup" class="guest-lookup" hidden>
+            <p class="guest-lookup-note">You can check out as a guest. To find a previous profile, enter the same Singapore number used earlier.</p>
+          <div class="phone-row">
+            <label>
+              <span>Singapore mobile number</span>
+              <input
+                id="lookup-phone"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="+65 8123 4567"
+              >
+            </label>
+
+            <button id="lookup-button" type="button">
+              Find My Profile
+            </button>
+          </div>
+
+          <p id="lookup-message" class="form-message" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <section class="step-card active" data-step-card="2">
+          <header class="step-heading">
+            <span>02</span>
             <div>
-              <p class="eyebrow">Delivery Address</p>
-              <h2 id="address-label">Home</h2>
+              <small>Delivery address</small>
+              <h2>Where should we deliver?</h2>
+              <p>Select one saved address. You can manage up to three addresses in My Account.</p>
             </div>
-            <button id="add-address-button" type="button">Add address</button>
+          </header>
+
+          <div id="found-profile" class="found-profile" hidden>
+            <div class="profile-mark" aria-hidden="true">✓</div>
+            <div>
+              <small>Profile found</small>
+              <strong id="found-name"></strong>
+              <span id="found-source"></span>
+            </div>
           </div>
 
-          <div id="address-list" class="address-list"></div>
-          <address id="address-display" hidden></address>
-          <p id="address-instructions" hidden></p>
+          <div id="saved-addresses" class="saved-addresses" hidden></div>
+          <a id="manage-addresses-link" class="manage-addresses-link" href="/account/" hidden>Manage or add an address →</a>
 
-          <div id="saved-location-wrap" class="saved-location-wrap" hidden>
-            <div class="saved-location-heading">
-              <div>
-                <strong>Saved delivery pin</strong>
-                <small>The location currently saved for your deliveries.</small>
-              </div>
-              <span id="saved-location-coordinates"></span>
+          <form id="customer-form" class="new-customer-form" novalidate>
+            <p class="new-customer-note">New here? Add your details once and we’ll save this address for your next harvest.</p>
+            <div class="form-grid">
+              <label>
+                <span>Full name</span>
+                <input id="customer-name" name="name" autocomplete="name" required>
+              </label>
+
+              <label>
+                <span>Mobile number</span>
+                <input id="customer-phone" name="phone" autocomplete="tel" inputmode="tel" required>
+              </label>
+
+              <label class="full">
+                <span>Email</span>
+                <input id="customer-email" name="email" type="email" autocomplete="email" required>
+              </label>
+
+              <label class="full">
+                <span>Address</span>
+                <textarea id="address-line" name="addressLine" rows="3" autocomplete="street-address" required></textarea>
+              </label>
+
+              <label>
+                <span>Unit number</span>
+                <input id="unit-number" name="unitNumber" placeholder="#05-21">
+              </label>
+
+              <label>
+                <span>Building / condo</span>
+                <input id="building" name="building">
+              </label>
+
+              <label>
+                <span>Postal code</span>
+                <input id="postal-code" name="postalCode" inputmode="numeric" maxlength="6" required>
+              </label>
+
+              <label>
+                <span>Location name</span>
+                <input id="place-name" name="placeName" placeholder="Home">
+              </label>
+
+              <label class="full">
+                <span>Delivery instructions</span>
+                <input id="delivery-instructions" name="deliveryInstructions" placeholder="Call on arrival, leave at door...">
+              </label>
             </div>
 
-            <iframe
-              id="saved-address-map"
-              class="saved-address-map-frame"
-              title="Saved delivery location map"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-            ></iframe>
+            <input id="lat-long" name="latLong" type="hidden">
+            <input id="source-waitlist-id" name="sourceWaitlistId" type="hidden">
+
+          </form>
+        </section>
+
+        <section class="step-card active" data-step-card="3">
+          <header class="step-heading">
+            <span>03</span>
+            <div>
+              <small>Payment</small>
+              <h2>Choose how you would like to pay.</h2>
+              <p>Your delivery is scheduled once your order and payment are confirmed.</p>
+            </div>
+          </header>
+
+          <div class="delivery-confirmation">
+            <span aria-hidden="true">🚚</span>
+            <div>
+              <small>Expected delivery</small>
+              <strong id="delivery-date">Sunday</strong>
+              <p>Between 9:00 a.m. and 9:00 p.m. Singapore time.</p>
+            </div>
           </div>
-        </article>
-      </section>
 
-      <section class="panel orders-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Harvest History</p>
-            <h2>Your orders</h2>
+          <div class="payment-section">
+            <h3>Payment method</h3>
+
+            <div class="payment-options">
+              <label>
+                <input type="radio" name="paymentMethod" value="PayNow" checked>
+                <span>
+                  <b>PayNow</b>
+                  <small>Continue to PayNow instructions after placing your order.</small>
+                </span>
+              </label>
+
+              <label class="payment-coming-soon">
+                <input type="radio" name="paymentMethod" value="HitPay" disabled>
+                <span>
+                  <b>Card, Apple Pay & Google Pay <em>Coming soon</em></b>
+                  <small>Secure card and wallet payments will be available with HitPay.</small>
+                </span>
+              </label>
+            </div>
           </div>
-        </div>
+        </section>
+      </div>
 
-        <div id="orders-list" class="orders-list"></div>
+      <aside class="order-summary">
+        <div class="summary-card">
+          <p class="eyebrow">Harvest Summary</p>
 
-        <div id="orders-empty" class="orders-empty" hidden>
-          <span>🧺</span>
-          <p>No harvest orders yet.</p>
-          <a href="/products/">Explore Harvest</a>
-        </div>
-      </section>
+          <div id="summary-items" class="summary-items"></div>
 
-      <section class="support-card">
-        <div>
-          <p class="eyebrow">Need Help?</p>
-          <h2>Our Singapore Harvest Team is here.</h2>
-          <p>Reach us for questions about your order, delivery or payment.</p>
-        </div>
+          <div class="summary-divider"></div>
 
-        <div class="support-actions">
-          <a id="support-whatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a>
-          <a id="support-call" href="#">Call</a>
-          <a id="support-email" href="mailto:health@myfarmbox.sg">Email</a>
+          <div class="summary-row">
+            <span>Harvest weight</span>
+            <strong id="summary-weight">0.00 kg eq.</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Products</span>
+            <strong id="summary-subtotal">S$0.00</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Delivery</span>
+            <strong id="summary-delivery-fee">FREE</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>GST</span>
+            <strong>Included</strong>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row total">
+            <span>Total</span>
+            <strong id="summary-total">S$0.00</strong>
+          </div>
+
+          <div id="checkout-warning" class="checkout-warning">
+            Select a delivery address to continue.
+          </div>
+
+          <button id="place-order-button" class="place-order-button" type="button" disabled>
+            Continue to PayNow
+          </button>
+
+          <p class="summary-note">
+            You will see PayNow instructions after your order is placed.
+          </p>
         </div>
-      </section>
+      </aside>
     </section>
   </main>
 
-  <dialog id="profile-dialog" class="edit-dialog">
-    <form method="dialog">
-      <div class="dialog-heading">
-        <div>
-          <p class="eyebrow">Profile</p>
-          <h2>Edit information</h2>
-        </div>
-        <button value="cancel" aria-label="Close">×</button>
-      </div>
 
-      <div class="form-grid">
-        <label><span>Name</span><input id="edit-name" required></label>
-        <label><span>Mobile</span><input id="edit-phone" type="tel" required></label>
-        <label class="full"><span>Email</span><input id="edit-email" type="email" required></label>
-        <label><span>Adults</span><input id="edit-adults" type="number" min="0"></label>
-        <label><span>Children</span><input id="edit-children" type="number" min="0"></label>
-      </div>
+  <div id="confirming-overlay" class="confirming-overlay" hidden>
+    <div class="confirming-card" role="status" aria-live="polite" aria-busy="true">
+      <div class="confirming-spinner" aria-hidden="true"></div>
+      <p class="eyebrow">Almost there</p>
+      <h2>Confirming your harvest…</h2>
+      <p>
+        We’re checking your order, delivery details and current availability.
+      </p>
+      <small>Please keep this page open for a moment.</small>
+    </div>
+  </div>
 
-      <div class="dialog-actions">
-        <button value="cancel" type="button" id="cancel-profile">Cancel</button>
-        <button type="button" id="save-profile" class="primary">Save Profile</button>
-      </div>
-    </form>
-  </dialog>
+  <dialog id="success-dialog" class="success-dialog">
+    <div class="success-mark">✓</div>
+    <p class="eyebrow">Harvest order received</p>
+    <h2>Thank you. Your harvest is now being planned.</h2>
 
-  <dialog id="address-dialog" class="edit-dialog">
-    <form method="dialog">
-      <div class="dialog-heading">
-        <div>
-          <p class="eyebrow">Delivery Address</p>
-          <h2>Edit address</h2>
-        </div>
-        <button value="cancel" aria-label="Close">×</button>
-      </div>
-
-      <div class="form-grid">
-        <label><span>Address tag</span><select id="edit-address-label"><option>Home</option><option>Office</option><option>Friend / Family</option><option>Other</option></select></label>
-        <label class="full"><span>Address</span><textarea id="edit-address-line" rows="3" required></textarea></label>
-
-        <div class="full map-section">
-          <div class="map-heading">
-            <div>
-              <span>Delivery pin</span>
-              <small>Drag the pin or tap the map to mark the correct building entrance.</small>
-            </div>
-
-            <div class="map-actions">
-              <button id="find-written-address" type="button">
-                Find This Address
-              </button>
-
-              <button id="use-current-location" type="button">
-                Use Current Location
-              </button>
-            </div>
-          </div>
-
-          <div id="address-map" aria-label="Delivery location map"></div>
-
-          <div class="map-status-row">
-            <span id="map-status">Place the delivery pin.</span>
-            <strong id="map-coordinates"></strong>
-          </div>
-
-          <p class="map-help">
-            Move the pin to the exact entrance. The address and postal code
-            will be updated from the selected location and can still be edited.
-          </p>
-
-          <input id="edit-lat-long" type="hidden">
-        </div>
-
-        <label><span>Unit number</span><input id="edit-unit-number"></label>
-        <label><span>Building / condo</span><input id="edit-building"></label>
-        <label><span>Postal code</span><input id="edit-postal-code" maxlength="6" required></label>
-        <label><span>Label</span><input id="edit-place-name" placeholder="Home"></label>
-        <label class="full"><span>Delivery instructions</span><input id="edit-delivery-instructions"></label>
-      </div>
-
-      <div class="dialog-actions">
-        <button value="cancel" type="button" id="cancel-address">Cancel</button>
-        <button type="button" id="save-address" class="primary">Save Address</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="order-dialog" class="order-dialog">
-    <div class="dialog-heading">
-      <div>
-        <p class="eyebrow">Harvest Order</p>
-        <h2 id="order-dialog-id"></h2>
-      </div>
-      <button id="close-order-dialog" type="button" aria-label="Close">×</button>
+    <div class="order-number-card">
+      <small>Order number</small>
+      <strong id="success-order-id"></strong>
     </div>
 
-    <div class="order-dialog-meta">
-      <div><small>Delivery</small><strong id="order-dialog-delivery"></strong></div>
-      <div><small>Status</small><strong id="order-dialog-status"></strong></div>
-      <div><small>Payment</small><strong id="order-dialog-payment"></strong></div>
+    <p id="success-delivery"></p>
+
+    <div id="payment-instructions" class="payment-instructions">
+      <small>Payment status</small>
+      <strong>Pending</strong>
+      <p id="payment-copy">Our Singapore team will share the payment instructions.</p>
     </div>
 
-    <div id="order-dialog-items" class="order-dialog-items"></div>
-
-    <div class="order-dialog-total">
-      <span>Total</span>
-      <strong id="order-dialog-total"></strong>
+    <div class="success-actions">
+      <a href="/">Return Home</a>
+      <button id="close-success-button" type="button">Done</button>
     </div>
-
-    <button id="reorder-button" class="reorder-button" type="button">Add These Items Again</button>
   </dialog>
 
-  <aside id="toast" class="toast" hidden>
-    <span>✓</span>
+  <aside id="toast" class="toast" role="status" aria-live="polite" hidden>
+    <span aria-hidden="true">✓</span>
     <div>
       <strong id="toast-title"></strong>
       <small id="toast-copy"></small>
@@ -313,7 +323,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/auth.js?v=1"></script>
   <script src="/shared.js?v=23"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="account.js?v=31"></script>
+  <script src="/cart-engine.js?v=49"></script>
+  <script src="checkout.js?v=55"></script>
 </body>
 </html>
