@@ -299,6 +299,14 @@
   background: var(--mfb-green-light);
 }
 
+.saved-addresses { display: grid; gap: 10px; margin: 18px 0 10px; }
+.saved-address-card { width: 100%; display: grid; gap: 4px; padding: 14px; border: 1px solid var(--mfb-border); border-radius: var(--mfb-radius-sm); background: #fff; color: var(--mfb-text); text-align: left; cursor: pointer; }
+.saved-address-card span { color: var(--mfb-green); font-size: 11px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+.saved-address-card strong { font-size: 14px; line-height: 1.4; }
+.saved-address-card small { color: var(--mfb-muted); font-size: 12px; }
+.saved-address-card.selected { border-color: var(--mfb-green); box-shadow: 0 0 0 3px rgba(67,141,53,.12); background: var(--mfb-green-light); }
+.manage-addresses-link { display: inline-block; margin: 2px 0 20px; color: var(--mfb-green-dark); font-size: 13px; font-weight: 700; }
+
 .profile-mark {
   width: 42px;
   height: 42px;

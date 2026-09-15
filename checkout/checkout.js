@@ -19,6 +19,7 @@
     profileFound: false,
     lookupComplete: false,
     profileSource: "",
+    selectedAddressId: "",
     submitting: false
   };
 
@@ -35,6 +36,8 @@
     foundProfile: $("found-profile"),
     foundName: $("found-name"),
     foundSource: $("found-source"),
+    savedAddresses: $("saved-addresses"),
+    manageAddresses: $("manage-addresses-link"),
     form: $("customer-form"),
     name: $("customer-name"),
     phone: $("customer-phone"),
@@ -427,6 +430,8 @@
     els.sourceWaitlistId.value =
       customer.sourceWaitlistId || "";
 
+    renderAddressChoices(profile.addresses || []);
+
     if (profile.found) {
       els.foundProfile.hidden = false;
       els.foundName.textContent =
@@ -445,6 +450,46 @@
 
     unlockStep(2);
     unlockStep(3);
+    updateCheckoutState();
+  }
+
+  function renderAddressChoices(addresses) {
+    const list = Array.isArray(addresses) ? addresses : [];
+    els.savedAddresses.innerHTML = "";
+    els.savedAddresses.hidden = !list.length;
+    els.manageAddresses.hidden = !list.length;
+
+    if (!list.length) {
+      state.selectedAddressId = "";
+      return;
+    }
+
+    list.forEach(address => {
+      const button = document.createElement("button");
+      const parts = [address.addressLine, address.unitNumber, address.building, address.postalCode ? `Singapore ${address.postalCode}` : ""].filter(Boolean);
+      button.type = "button";
+      button.className = "saved-address-card";
+      button.dataset.addressId = address.addressId;
+      button.innerHTML = `<span>${escapeHtml(address.label || "Address")}</span><strong>${escapeHtml(parts.join(", "))}</strong>${address.isDefault ? "<small>Default delivery address</small>" : ""}`;
+      button.addEventListener("click", () => selectAddress(address, list));
+      els.savedAddresses.appendChild(button);
+    });
+
+    selectAddress(list.find(address => address.isDefault) || list[0], list);
+  }
+
+  function selectAddress(address, addresses) {
+    state.selectedAddressId = address.addressId || "";
+    els.addressLine.value = address.addressLine || "";
+    els.unitNumber.value = address.unitNumber || "";
+    els.building.value = address.building || "";
+    els.postalCode.value = address.postalCode || "";
+    els.placeName.value = address.placeName || address.label || "Home";
+    els.deliveryInstructions.value = address.deliveryInstructions || "";
+    els.latLong.value = address.latLong || "";
+    els.savedAddresses.querySelectorAll(".saved-address-card").forEach(card => {
+      card.classList.toggle("selected", card.dataset.addressId === state.selectedAddressId);
+    });
     updateCheckoutState();
   }
 
@@ -718,6 +763,7 @@
         sourceWaitlistId:
           els.sourceWaitlistId.value.trim()
       },
+      addressId: state.selectedAddressId,
       address: {
         label: "Home",
         addressLine: els.addressLine.value.trim(),
