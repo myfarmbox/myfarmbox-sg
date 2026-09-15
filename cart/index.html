@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/shared.css?v=20">
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="/shared.css?v=25">
+  <link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
   <div id="site-header"></div>
@@ -18,10 +18,10 @@
     <header class="page-head">
       <div>
         <p class="eyebrow">My Harvest</p>
-        <h1>Review your weekly harvest.</h1>
-        <p>Your selections are saved until you are ready.</p>
+        <h1>Your selected harvest.</h1>
+        <p>Freshly selected for you.</p>
       </div>
-      <a href="/products/">← Continue Harvest</a>
+      <a href="/products/">← Continue shopping</a>
     </header>
 
     <section id="loading" class="notice">Checking current prices and availability…</section>
@@ -35,24 +35,23 @@
 
     <section id="layout" class="layout" hidden>
       <div class="main">
-        <section class="quick-summary">
+        <section class="quick-summary sr-data" aria-hidden="true">
           <div><small>Items</small><strong id="sumItems">0</strong></div>
           <div><small>Weight</small><strong id="sumWeight">0.00 kg</strong></div>
           <div><small>Delivery</small><strong id="sumDelivery">Sunday</strong></div>
           <div><small>Total</small><strong id="sumTotal">S$0.00</strong></div>
         </section>
 
-        <section class="delivery">
+        <section class="delivery delivery-compact">
           <span>🚚</span>
           <div>
-            <small>Your delivery</small>
+            <small>Delivery</small>
             <h2 id="deliveryDate">Sunday delivery</h2>
-            <p>Delivered between 9:00 a.m. and 9:00 p.m. Singapore time.</p>
-            <b>Orders placed by Wednesday, 11:59 p.m. are delivered on the coming Sunday. Later orders move to the following Sunday.</b>
+            <p>9:00 a.m. – 9:00 p.m., Singapore.</p>
           </div>
         </section>
 
-        <section class="progress-card">
+        <section class="progress-card progress-compact">
           <div class="progress-copy">
             <div><small>Minimum harvest</small><strong id="minimumStatus">Checking…</strong></div>
             <span id="minimumWeight">0.00 / 5.00 kg</span>
@@ -69,13 +68,15 @@
           <div id="items" class="items"></div>
         </section>
 
-        <section class="notes">
+        <details class="notes optional-card">
+          <summary>Add a delivery note <span>Optional</span></summary>
           <label for="notes"><b>Anything you’d like us to know?</b><small>Delivery instructions or substitutions.</small></label>
           <textarea id="notes" maxlength="500" rows="4" placeholder="For example: call on arrival..."></textarea>
           <span id="notesCount">0 / 500</span>
-        </section>
+        </details>
 
-        <section class="returns">
+        <details class="returns optional-card">
+          <summary>Return packaging <span>Optional</span></summary>
           <div class="section-head">
             <div><small>Optional</small><h2>Return with this Harvest</h2></div>
             <span>♻️</span>
@@ -85,22 +86,21 @@
             <label><input type="checkbox" value="Ice Pack"><span>Ice Pack</span></label>
             <label><input type="checkbox" value="Vegetable Containers"><span>Vegetable Containers</span></label>
           </div>
-        </section>
+        </details>
       </div>
 
       <aside class="order-summary">
         <div class="summary-card">
-          <p class="eyebrow">Order Summary</p>
+          <p class="eyebrow">Total</p>
           <div><span>Products</span><strong id="subtotal">S$0.00</strong></div>
           <div><span>Delivery</span><strong id="deliveryFee">FREE</strong></div>
-          <div><span>GST</span><strong>Included</strong></div>
           <hr>
           <div class="total"><span>Total</span><strong id="grandTotal">S$0.00</strong></div>
           <p id="warning" class="warning">
             Add more produce to reach the 5 kg minimum.
           </p>
-          <a id="confirmBtn" class="confirm disabled" href="/checkout/" aria-disabled="true">Confirm Harvest →</a>
-          <small class="footnote">Prices and availability are rechecked before checkout.</small>
+          <a id="confirmBtn" class="confirm disabled" href="/checkout/" aria-disabled="true">Checkout →</a>
+          <small class="footnote">Final availability is checked at checkout.</small>
         </div>
       </aside>
     </section>
@@ -118,7 +118,7 @@
 
   <div id="site-footer"></div>
 
-  <script src="/shared.js?v=22"></script>
+  <script src="/shared.js?v=25"></script>
   <script src="/cart-engine.js?v=49"></script>
   <script src="app.js?v=50"></script>
 </body>

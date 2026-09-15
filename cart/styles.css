@@ -754,3 +754,20 @@ dialog button {
     font-size: 20px;
   }
 }
+
+/* Minimal cart presentation */
+.sr-data { display: none; }
+.delivery-compact { grid-template-columns: 38px 1fr; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--mfb-green-light); }
+.delivery-compact > span { width: 38px; height: 38px; border-radius: 11px; font-size: 18px; }
+.delivery-compact h2 { margin: 2px 0; font-size: 17px; }
+.delivery-compact p { margin: 0; font-size: 12px; }
+.progress-compact { padding: 15px 18px; box-shadow: none; }
+.progress-compact .track { margin: 10px 0; height: 6px; }
+.optional-card { padding: 16px 20px; border: 1px solid var(--mfb-border); border-radius: var(--mfb-radius); background: var(--mfb-white); box-shadow: none; }
+.optional-card summary { display: flex; justify-content: space-between; cursor: pointer; color: var(--mfb-deep); font-size: 13px; font-weight: 700; }
+.optional-card summary span { color: var(--mfb-muted); font-size: 11px; font-weight: 600; }
+.optional-card[open] summary { margin-bottom: 15px; }
+.optional-card .section-head { display: none; }
+.optional-card .notes { padding: 0; }
+.items-card { box-shadow: none; }
+.summary-card { box-shadow: none; }
