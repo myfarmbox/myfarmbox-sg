@@ -1179,6 +1179,18 @@
     }
   }
 
+  window.MFBAuth?.onChange(user => {
+    if (!user?.email || account) return;
+
+    localStorage.setItem(
+      "mfb_sg_auth_user_v1",
+      JSON.stringify({ email: user.email })
+    );
+
+    els.loginEmail.value = user.email;
+    loadAccount("", user.email);
+  });
+
   els.loginButton.onclick = () =>
     loadAccount(
       els.loginPhone.value,
