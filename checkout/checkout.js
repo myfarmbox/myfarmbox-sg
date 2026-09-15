@@ -63,7 +63,14 @@
     successDialog: $("success-dialog"),
     successOrderId: $("success-order-id"),
     successDelivery: $("success-delivery"),
+    paymentStatus: $("payment-status"),
     paymentCopy: $("payment-copy"),
+    paynowDetails: $("paynow-details"),
+    paynowQr: $("paynow-qr"),
+    paynowAmount: $("paynow-amount"),
+    paynowPayee: $("paynow-payee"),
+    paynowReference: $("paynow-reference"),
+    paynowLink: $("paynow-link"),
     closeSuccess: $("close-success-button"),
     toast: $("toast"),
     toastTitle: $("toast-title"),
@@ -240,6 +247,46 @@
         'input[name="paymentMethod"]:checked'
       )?.value || "PayNow"
     );
+  }
+
+  function resetPaymentDetails() {
+    els.paymentStatus.textContent = "Preparing payment details";
+    els.paymentCopy.textContent =
+      "Please keep this page open while we prepare your PayNow details.";
+    els.paynowDetails.hidden = true;
+    els.paynowQr.hidden = true;
+    els.paynowQr.removeAttribute("src");
+    els.paynowLink.hidden = true;
+    els.paynowLink.removeAttribute("href");
+  }
+
+  function showPayNowDetails(payment, currency) {
+    const amount = Number(payment.amount || 0);
+    const formattedAmount = new Intl.NumberFormat("en-SG", {
+      style: "currency",
+      currency: currency || "SGD"
+    }).format(amount);
+
+    els.paymentStatus.textContent = "Ready for payment";
+    els.paymentCopy.textContent =
+      "Use PayNow with the exact amount and reference below.";
+    els.paynowAmount.textContent = `Amount: ${formattedAmount}`;
+    els.paynowPayee.textContent = payment.payee
+      ? `Pay to: ${payment.payeeName || "MyFarmBox SG"} (${payment.payee})`
+      : `Pay to: ${payment.payeeName || "MyFarmBox SG"}`;
+    els.paynowReference.textContent = `Reference: ${payment.reference || "Use your order number"}`;
+
+    if (payment.paymentQrDataUrl) {
+      els.paynowQr.src = payment.paymentQrDataUrl;
+      els.paynowQr.hidden = false;
+    }
+
+    if (payment.paymentUrl) {
+      els.paynowLink.href = payment.paymentUrl;
+      els.paynowLink.hidden = false;
+    }
+
+    els.paynowDetails.hidden = false;
   }
 
   function draft() {
@@ -846,6 +893,7 @@
     els.placeOrder.textContent = "Preparing PayNow…";
 
     showConfirmingOverlay();
+    resetPaymentDetails();
 
     const startedAt = Date.now();
     const minimumLoaderMs = 800;
@@ -897,12 +945,38 @@
       els.successDelivery.textContent =
         `Expected delivery: ${formatDeliveryDate(data.deliveryDate)}, between 9:00 a.m. and 9:00 p.m.`;
 
-      els.paymentCopy.textContent =
-        data.paymentInstructions ||
-        "Our Singapore team will share the payment instructions.";
-
       hideConfirmingOverlay();
       els.successDialog.showModal();
+
+      if (paymentMethod() !== "PayNow") {
+        els.paymentStatus.textContent = data.paymentStatus || "Pending";
+        els.paymentCopy.textContent =
+          data.paymentInstructions || "Payment details will be shared shortly.";
+        return;
+      }
+
+      try {
+        const paymentResponse = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "createCheckoutPayment",
+            orderId: data.orderId,
+            customerId: data.customerId
+          })
+        });
+
+        const payment = await paymentResponse.json();
+
+        if (!payment.ok) {
+          throw new Error(payment.message || "Could not prepare PayNow details.");
+        }
+
+        showPayNowDetails(payment, data.currency);
+      } catch (paymentError) {
+        els.paymentStatus.textContent = "Payment details are being prepared";
+        els.paymentCopy.textContent =
+          "Your order is confirmed. Our team will share the PayNow details shortly.";
+      }
 
     } catch (error) {
       hideConfirmingOverlay();

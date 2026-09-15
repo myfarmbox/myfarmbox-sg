@@ -712,6 +712,43 @@
   font-size: 12px;
 }
 
+.paynow-details {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--mfb-border);
+}
+
+.paynow-details p {
+  margin: 6px 0;
+  color: var(--mfb-green-dark);
+}
+
+.paynow-amount {
+  font-size: 16px !important;
+  font-weight: 800;
+}
+
+.paynow-details img {
+  width: min(180px, 100%);
+  margin: 5px auto 13px;
+  display: block;
+  border: 1px solid var(--mfb-border);
+  border-radius: 10px;
+}
+
+.paynow-link {
+  min-height: 42px;
+  margin-top: 13px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--mfb-green);
+  color: var(--mfb-white);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .success-dialog > p {
   font-size: 14px;
 }

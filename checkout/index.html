@@ -300,8 +300,18 @@
 
     <div id="payment-instructions" class="payment-instructions">
       <small>Payment status</small>
-      <strong>Pending</strong>
-      <p id="payment-copy">Our Singapore team will share the payment instructions.</p>
+      <strong id="payment-status">Preparing payment details</strong>
+      <p id="payment-copy">Please keep this page open while we prepare your PayNow details.</p>
+
+      <div id="paynow-details" class="paynow-details" hidden>
+        <img id="paynow-qr" alt="PayNow QR code" hidden>
+        <p id="paynow-amount" class="paynow-amount"></p>
+        <p id="paynow-payee"></p>
+        <p id="paynow-reference"></p>
+        <a id="paynow-link" class="paynow-link" href="#" target="_blank" rel="noopener" hidden>
+          Open PayNow payment
+        </a>
+      </div>
     </div>
 
     <div class="success-actions">
