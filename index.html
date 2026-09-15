@@ -4,316 +4,364 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#438d35">
-  <meta name="description" content="View your profile, delivery address and harvest history with MyFarmBox Singapore.">
-  <title>My Account — MyFarmBox Singapore</title>
+  <meta
+    name="description"
+    content="MyFarmBox Singapore — 100% Natural Produce, planned around your family and delivered every Sunday."
+  >
+  <title>MyFarmBox Singapore — We Farm For Families, Not For Shelves.</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  >
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
+  <link rel="manifest" href="/site.webmanifest">
+
   <link rel="stylesheet" href="/shared.css?v=22">
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="/styles.css?v=23">
 </head>
+
 <body>
   <div id="site-header"></div>
 
-  <main class="shell">
-    <section id="login-view" class="login-card">
-      <div class="login-mark">🌿</div>
-      <p class="eyebrow">My Account</p>
-      <h1>Welcome back.</h1>
-      <p>Sign in once to see your saved delivery address, orders and harvest details.</p>
+  <main>
+    <section class="home-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">MyFarmBox Singapore</p>
 
-      <div class="account-auth-actions">
-        <button id="account-google-login" type="button" class="primary-login">Continue with Google</button>
-        <div class="account-auth-divider"><span>or email me a sign-in link</span></div>
-        <div class="account-magic-row">
-          <input id="account-magic-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address">
-          <button id="account-magic-login" type="button">Send link</button>
-        </div>
-        <p id="account-auth-message" class="form-message"></p>
-      </div>
+        <h1>
+          We Harvest For Families<br>
+          <em>Not For Shelves.</em>
+        </h1>
 
-      <details class="manual-account-lookup">
-        <summary>Use my mobile number and email instead</summary>
-
-      <div class="login-grid">
-        <label>
-          <span>Mobile number</span>
-          <input id="login-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+65 8958 2110">
-        </label>
-
-        <label>
-          <span>Email</span>
-          <input id="login-email" type="email" autocomplete="email" placeholder="you@example.com">
-        </label>
-      </div>
-
-      <button id="login-button" type="button">Find My Account</button>
-      <p id="login-message" class="form-message"></p>
-      </details>
-    </section>
-
-    <section id="account-view" hidden>
-      <header class="account-hero">
-        <div class="avatar" id="avatar">MF</div>
-
-        <div class="hero-copy">
-          <p class="eyebrow">Founding Harvest Member</p>
-          <h1>Hello, <span id="hero-name">Member</span>.</h1>
-          <p id="hero-customer-id"></p>
-        </div>
+        <p class="hero-lead">
+          Fresh <strong>100% Natural Produce</strong>, thoughtfully planned around your family and delivered fresh to your doorstep.
+        </p>
 
         <div class="hero-actions">
-          <button id="edit-profile-button" type="button">Edit Profile</button>
-          <button id="logout-button" type="button" class="secondary">Switch Account</button>
-        </div>
-      </header>
+          <a class="primary" href="/products/">
+            Explore Harvest <span aria-hidden="true">→</span>
+          </a>
 
-      <section class="stats-grid">
-        <article>
-          <small>Orders</small>
-          <strong id="stat-orders">0</strong>
-        </article>
-        <article>
-          <small>Total spent</small>
-          <strong id="stat-spent">S$0.00</strong>
-        </article>
-        <article>
-          <small>Upcoming</small>
-          <strong id="stat-upcoming">0</strong>
-        </article>
-        <article>
-          <small>Status</small>
-          <strong id="stat-status">Active</strong>
-        </article>
-      </section>
-
-      <section id="upcoming-section" class="upcoming-card" hidden>
-        <div>
-          <p class="eyebrow">Upcoming Harvest</p>
-          <h2 id="upcoming-order-id"></h2>
-          <p id="upcoming-delivery"></p>
+          <a class="secondary" href="/join/">
+            Plan My Harvest
+          </a>
         </div>
 
-        <div class="upcoming-meta">
-          <span id="upcoming-order-status"></span>
-          <strong id="upcoming-total"></strong>
-          <button id="upcoming-view-button" type="button">View Order</button>
+        <div class="hero-trust">
+          <span>Order anytime</span>
+          <span>Sunday home delivery</span>
+          <span>5 kg minimum harvest</span>
         </div>
-      </section>
+      </div>
 
-      <section class="dashboard-grid">
-        <article class="panel profile-panel">
-          <div class="panel-heading">
+      <div class="hero-visual">
+        <div class="harvest-image-card">
+          <img
+              src="assets/hero-home.webp"
+              alt="Fresh vegetables arranged for a MyFarmBox Singapore harvest"
+              loading="eager"
+              decoding="async"
+          />
+
+          <div class="image-fallback">
+            <span>🌿</span>
+            <strong>Your weekly harvest</strong>
+          </div>
+
+          <div class="visual-label top">
+            <small>Harvest cycle</small>
+            <strong>Planned, not rushed</strong>
+          </div>
+
+          <div class="visual-label bottom">
+            <span aria-hidden="true">🚚</span>
             <div>
-              <p class="eyebrow">Profile</p>
-              <h2>Your information</h2>
+              <small>Delivered Sunday</small>
+              <strong>9:00 a.m.–9:00 p.m.</strong>
             </div>
-            <button id="edit-profile-button-2" type="button">Edit</button>
-          </div>
-
-          <dl>
-            <div><dt>Name</dt><dd id="profile-name"></dd></div>
-            <div><dt>Mobile</dt><dd id="profile-phone"></dd></div>
-            <div><dt>Email</dt><dd id="profile-email"></dd></div>
-            <div><dt>Adults</dt><dd id="profile-adults"></dd></div>
-            <div><dt>Children</dt><dd id="profile-children"></dd></div>
-          </dl>
-        </article>
-
-        <article class="panel address-panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">Delivery Address</p>
-              <h2 id="address-label">Home</h2>
-            </div>
-            <button id="add-address-button" type="button">Add address</button>
-          </div>
-
-          <div id="address-list" class="address-list"></div>
-          <address id="address-display" hidden></address>
-          <p id="address-instructions" hidden></p>
-
-          <div id="saved-location-wrap" class="saved-location-wrap" hidden>
-            <div class="saved-location-heading">
-              <div>
-                <strong>Saved delivery pin</strong>
-                <small>The location currently saved for your deliveries.</small>
-              </div>
-              <span id="saved-location-coordinates"></span>
-            </div>
-
-            <iframe
-              id="saved-address-map"
-              class="saved-address-map-frame"
-              title="Saved delivery location map"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-            ></iframe>
-          </div>
-        </article>
-      </section>
-
-      <section class="panel orders-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Harvest History</p>
-            <h2>Your orders</h2>
           </div>
         </div>
-
-        <div id="orders-list" class="orders-list"></div>
-
-        <div id="orders-empty" class="orders-empty" hidden>
-          <span>🧺</span>
-          <p>No harvest orders yet.</p>
-          <a href="/products/">Explore Harvest</a>
-        </div>
-      </section>
-
-      <section class="support-card">
-        <div>
-          <p class="eyebrow">Need Help?</p>
-          <h2>Our Singapore Harvest Team is here.</h2>
-          <p>Reach us for questions about your order, delivery or payment.</p>
-        </div>
-
-        <div class="support-actions">
-          <a id="support-whatsapp" href="#" target="_blank" rel="noopener">WhatsApp</a>
-          <a id="support-call" href="#">Call</a>
-          <a id="support-email" href="mailto:health@myfarmbox.sg">Email</a>
-        </div>
-      </section>
+      </div>
     </section>
+
+    <section class="how-it-works mfb-section">
+      <div class="section-heading">
+        <p class="eyebrow">How it works</p>
+        <h2>A simple weekly harvest cycle.</h2>
+        <p>
+          Choose what your household needs. We plan the harvest closer to
+          delivery and bring it home on Sunday.
+        </p>
+      </div>
+
+      <div class="steps-grid">
+        <article>
+          <span class="step-number">01</span>
+          <div class="step-icon" aria-hidden="true">🧺</div>
+          <h3>Choose your harvest</h3>
+          <p>
+            Select vegetables, fruits, greens and pantry essentials based on
+            your household needs.
+          </p>
+        </article>
+
+        <article>
+          <span class="step-number">02</span>
+          <div class="step-icon" aria-hidden="true">🌱</div>
+          <h3>We plan and prepare</h3>
+          <p>
+            Orders are consolidated so the harvest can be planned with care
+            and unnecessary waste can be reduced.
+          </p>
+        </article>
+
+        <article>
+          <span class="step-number">03</span>
+          <div class="step-icon" aria-hidden="true">🚚</div>
+          <h3>Delivered on Sunday</h3>
+          <p>
+            Your harvest reaches your home between 9:00 a.m. and 9:00 p.m.
+            across Singapore.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="delivery-cycle mfb-section">
+      <div class="delivery-copy">
+        <p class="eyebrow">Order anytime</p>
+        <h2>Your next Sunday harvest, made clear.</h2>
+        <p>
+          Orders placed by Wednesday at 11:59 p.m. are planned for the coming
+          Sunday. Orders placed after the cut-off move to the following Sunday.
+        </p>
+
+        <a href="/products/" class="text-link">
+          Start this week’s harvest <span aria-hidden="true">→</span>
+        </a>
+      </div>
+
+      <div class="timeline-card">
+        <div class="timeline-row active">
+          <span class="timeline-dot"></span>
+          <div>
+            <small>Order by</small>
+            <strong>Wednesday, 11:59 p.m.</strong>
+          </div>
+        </div>
+
+        <div class="timeline-line"></div>
+
+        <div class="timeline-row">
+          <span class="timeline-dot"></span>
+          <div>
+            <small>Harvest planning</small>
+            <strong>Thursday to Saturday</strong>
+          </div>
+        </div>
+
+        <div class="timeline-line"></div>
+
+        <div class="timeline-row">
+          <span class="timeline-dot"></span>
+          <div>
+            <small>Home delivery</small>
+            <strong>Sunday, 9:00 a.m.–9:00 p.m.</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="why-mfb mfb-section">
+      <div class="section-heading centered">
+        <p class="eyebrow">Why MyFarmBox</p>
+        <h2>Designed around real family routines.</h2>
+      </div>
+
+      <div class="benefits-grid">
+        <article>
+          <span aria-hidden="true">🌱</span>
+          <h3>100% Natural Produce</h3>
+          <p>thoughtfully planned around your family and delivered fresh to your doorstep.</p>
+        </article>
+
+        <article>
+          <span aria-hidden="true">🥬</span>
+          <h3>Closer to delivery</h3>
+          <p>Harvest preparation is planned nearer to the day it reaches you.</p>
+        </article>
+
+        <article>
+          <span aria-hidden="true">🧺</span>
+          <h3>Choose what you need</h3>
+          <p>Build a harvest that suits your family instead of taking a fixed box.</p>
+        </article>
+
+        <article>
+          <span aria-hidden="true">🚚</span>
+          <h3>Sunday home delivery</h3>
+          <p>A single clear weekly delivery cycle across Singapore.</p>
+        </article>
+
+        <article>
+          <span aria-hidden="true">📍</span>
+          <h3>Better delivery accuracy</h3>
+          <p>Saved delivery addresses and map pins help the team reach you reliably.</p>
+        </article>
+
+        <article>
+          <span aria-hidden="true">♻️</span>
+          <h3>Returns made simple</h3>
+          <p>Return jute bags, ice packs and containers with your next harvest.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="founding-section mfb-section">
+      <div class="founding-card">
+        <div>
+          <p class="eyebrow">Singapore Founding Harvest</p>
+          <h2>Help shape the way MyFarmBox grows in Singapore.</h2>
+          <p>
+            Our first families are helping us refine product selection,
+            delivery, packing and the weekly harvest experience.
+          </p>
+        </div>
+
+        <div class="founding-benefits">
+          <span>Priority access</span>
+          <span>Early harvest updates</span>
+          <span>Direct feedback channel</span>
+          <span>Help shape future selections</span>
+        </div>
+
+        <div class="founding-actions">
+          <a class="primary" href="/join/">
+            Join the Founding Harvest
+          </a>
+          <a class="secondary" href="/products/">
+            Explore Products
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta mfb-section">
+      <div>
+        <p class="eyebrow">Ready when you are</p>
+        <h2>Start planning your family’s next harvest.</h2>
+      </div>
+
+      <a class="primary" href="/products/">
+        Explore Harvest <span aria-hidden="true">→</span>
+      </a>
+    </section>
+
+    <section class="harvest-film" aria-labelledby="harvest-film-title">
+  <div class="harvest-film__copy">
+    <p class="eyebrow">From farm to family</p>
+    <h2 id="harvest-film-title">Every thoughtful harvest begins with a family.</h2>
+    <p>
+      See how your family’s choices become a planned harvest,
+      packed with care and delivered to your home.
+    </p>
+
+    <button class="film-button" type="button" data-open-film>
+      Watch our story
+      <span aria-hidden="true">→</span>
+    </button>
+  </div>
+
+  <button class="harvest-film__visual" type="button" data-open-film aria-label="Watch the MyFarmBox harvest journey">
+    <img src="https://i.ytimg.com/vi/7JnpwBoG5E4/maxresdefault.jpg"
+         alt="A MyFarmBox harvest crate filled with fresh 100% Natural Produce">
+    <span class="play-circle" aria-hidden="true">▶</span>
+  </button>
+</section>
+
+<div class="film-modal" id="film-modal" aria-hidden="true">
+  <div class="film-modal__backdrop" data-close-film></div>
+
+  <div class="film-modal__dialog" role="dialog" aria-modal="true" aria-label="MyFarmBox harvest journey video">
+    <button class="film-modal__close" type="button" data-close-film aria-label="Close video">×</button>
+    <div class="film-modal__video">
+      <iframe
+        id="mfb-film-player"
+        title="MyFarmBox Singapore harvest journey"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+</div>
+    
   </main>
 
-  <dialog id="profile-dialog" class="edit-dialog">
-    <form method="dialog">
-      <div class="dialog-heading">
-        <div>
-          <p class="eyebrow">Profile</p>
-          <h2>Edit information</h2>
-        </div>
-        <button value="cancel" aria-label="Close">×</button>
-      </div>
+<div id="site-footer"></div>
 
-      <div class="form-grid">
-        <label><span>Name</span><input id="edit-name" required></label>
-        <label><span>Mobile</span><input id="edit-phone" type="tel" required></label>
-        <label class="full"><span>Email</span><input id="edit-email" type="email" required></label>
-        <label><span>Adults</span><input id="edit-adults" type="number" min="0"></label>
-        <label><span>Children</span><input id="edit-children" type="number" min="0"></label>
-      </div>
+  <a
+  class="floating-whatsapp"
+  href="https://wa.me/6589582110?text=Hi%20MyFarmBox%20Singapore%2C%20I%27d%20like%20to%20know%20more%20about%20your%20harvest."
+  target="_blank"
+  rel="noopener"
+  aria-label="Chat with MyFarmBox Singapore on WhatsApp"
+>
+  <span aria-hidden="true">💬</span>
+  <strong>WhatsApp</strong>
+</a>
 
-      <div class="dialog-actions">
-        <button value="cancel" type="button" id="cancel-profile">Cancel</button>
-        <button type="button" id="save-profile" class="primary">Save Profile</button>
-      </div>
-    </form>
-  </dialog>
+  <div class="mobile-home-cta">
+    <a href="/products/">
+      <span aria-hidden="true">🧺</span>
+      Explore Harvest
+    </a>
+  </div>
 
-  <dialog id="address-dialog" class="edit-dialog">
-    <form method="dialog">
-      <div class="dialog-heading">
-        <div>
-          <p class="eyebrow">Delivery Address</p>
-          <h2>Edit address</h2>
-        </div>
-        <button value="cancel" aria-label="Close">×</button>
-      </div>
+  <script src="/shared.js?v=20"></script>
+  <script src="/app.js?v=20"></script>
 
-      <div class="form-grid">
-        <label><span>Address tag</span><select id="edit-address-label"><option>Home</option><option>Office</option><option>Friend / Family</option><option>Other</option></select></label>
-        <label class="full"><span>Address</span><textarea id="edit-address-line" rows="3" required></textarea></label>
+  <script>
+  (() => {
+    const modal = document.getElementById('film-modal');
+    const player = document.getElementById('mfb-film-player');
+    const videoId = '7JnpwBoG5E4';
 
-        <div class="full map-section">
-          <div class="map-heading">
-            <div>
-              <span>Delivery pin</span>
-              <small>Drag the pin or tap the map to mark the correct building entrance.</small>
-            </div>
+    function openFilm() {
+      player.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&controls=0&cc_load_policy=1&cc_lang_pref=en`;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      sessionStorage.setItem('mfb-film-seen', 'true');
+    }
 
-            <div class="map-actions">
-              <button id="find-written-address" type="button">
-                Find This Address
-              </button>
+    function closeFilm() {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      player.src = '';
+      document.body.style.overflow = '';
+    }
 
-              <button id="use-current-location" type="button">
-                Use Current Location
-              </button>
-            </div>
-          </div>
+    document.querySelectorAll('[data-open-film]').forEach(button => {
+      button.addEventListener('click', openFilm);
+    });
 
-          <div id="address-map" aria-label="Delivery location map"></div>
+    document.querySelectorAll('[data-close-film]').forEach(button => {
+      button.addEventListener('click', closeFilm);
+    });
 
-          <div class="map-status-row">
-            <span id="map-status">Place the delivery pin.</span>
-            <strong id="map-coordinates"></strong>
-          </div>
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeFilm();
+    });
 
-          <p class="map-help">
-            Move the pin to the exact entrance. The address and postal code
-            will be updated from the selected location and can still be edited.
-          </p>
-
-          <input id="edit-lat-long" type="hidden">
-        </div>
-
-        <label><span>Unit number</span><input id="edit-unit-number"></label>
-        <label><span>Building / condo</span><input id="edit-building"></label>
-        <label><span>Postal code</span><input id="edit-postal-code" maxlength="6" required></label>
-        <label><span>Label</span><input id="edit-place-name" placeholder="Home"></label>
-        <label class="full"><span>Delivery instructions</span><input id="edit-delivery-instructions"></label>
-      </div>
-
-      <div class="dialog-actions">
-        <button value="cancel" type="button" id="cancel-address">Cancel</button>
-        <button type="button" id="save-address" class="primary">Save Address</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="order-dialog" class="order-dialog">
-    <div class="dialog-heading">
-      <div>
-        <p class="eyebrow">Harvest Order</p>
-        <h2 id="order-dialog-id"></h2>
-      </div>
-      <button id="close-order-dialog" type="button" aria-label="Close">×</button>
-    </div>
-
-    <div class="order-dialog-meta">
-      <div><small>Delivery</small><strong id="order-dialog-delivery"></strong></div>
-      <div><small>Status</small><strong id="order-dialog-status"></strong></div>
-      <div><small>Payment</small><strong id="order-dialog-payment"></strong></div>
-    </div>
-
-    <div id="order-dialog-items" class="order-dialog-items"></div>
-
-    <div class="order-dialog-total">
-      <span>Total</span>
-      <strong id="order-dialog-total"></strong>
-    </div>
-
-    <button id="reorder-button" class="reorder-button" type="button">Add These Items Again</button>
-  </dialog>
-
-  <aside id="toast" class="toast" hidden>
-    <span>✓</span>
-    <div>
-      <strong id="toast-title"></strong>
-      <small id="toast-copy"></small>
-    </div>
-  </aside>
-
-  <div id="site-footer"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/auth.js?v=1"></script>
-  <script src="/shared.js?v=23"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="account.js?v=31"></script>
+    setTimeout(openFilm, 2000);
+  })();
+</script>
+  
 </body>
 </html>
