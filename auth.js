@@ -17,9 +17,14 @@
 
   window.MFBAuth = {
     getUser: async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) return null;
-      return data.user || null;
+      // After an OAuth redirect, the browser may need a moment to persist
+      // the returned session before page code asks for it.
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user) return data.session.user;
+        await new Promise(resolve => window.setTimeout(resolve, 250));
+      }
+      return null;
     },
     signInWithGoogle: async (redirectTo = defaultRedirectUrl()) => {
       const { error } = await supabase.auth.signInWithOAuth({
