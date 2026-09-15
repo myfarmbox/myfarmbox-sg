@@ -50,9 +50,7 @@
     deliveryInstructions: $("delivery-instructions"),
     latLong: $("lat-long"),
     sourceWaitlistId: $("source-waitlist-id"),
-    detailsConfirmed: $("details-confirmed"),
     deliveryDate: $("delivery-date"),
-    termsConfirmed: $("terms-confirmed"),
     summaryItems: $("summary-items"),
     summaryWeight: $("summary-weight"),
     summarySubtotal: $("summary-subtotal"),
@@ -359,8 +357,6 @@
     return Boolean(
       state.lookupComplete &&
       fieldsValid &&
-      els.detailsConfirmed.checked &&
-      els.termsConfirmed.checked &&
       state.cart.length &&
       summary.qualified
     );
@@ -393,14 +389,6 @@
     } else if (!state.lookupComplete) {
       els.warning.textContent = "Sign in or continue as a guest to continue.";
       els.warning.className = "checkout-warning";
-    } else if (!els.detailsConfirmed.checked) {
-      els.warning.textContent =
-        "Please confirm your profile and address.";
-      els.warning.className = "checkout-warning";
-    } else if (!els.termsConfirmed.checked) {
-      els.warning.textContent =
-        "Please confirm the harvest terms.";
-      els.warning.className = "checkout-warning";
     } else if (!valid) {
       els.warning.textContent =
         "Please complete all required customer and address fields.";
@@ -414,6 +402,11 @@
 
   function populateProfile(profile) {
     const customer = profile.customer || {};
+    const signedIn = readJson("mfb_sg_auth_user_v1", {});
+    if (signedIn.email && customer.name) {
+      localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ ...signedIn, name: customer.name }));
+      window.renderMfbHeader?.();
+    }
     const address = profile.address || {};
 
     els.name.value = customer.name || "";
@@ -558,8 +551,8 @@
       const response = await fetch(`${API_URL}?action=getAccount&phone=&email=${encodeURIComponent(user.email)}`, { cache: "no-store" });
       const data = await response.json();
       if (data.ok && data.found) {
-        populateProfile({ found: true, source: "Customers", customer: data.customer, address: data.address });
-        els.lookupMessage.textContent = "Your saved profile and delivery address are ready to confirm.";
+        populateProfile({ found: true, source: "Customers", customer: data.customer, address: data.address, addresses: data.addresses || [] });
+        els.lookupMessage.textContent = "Your saved delivery address is ready.";
         els.lookupMessage.className = "form-message success";
       } else {
         populateProfile({ found: false, source: "New Customer", customer: { email: user.email }, address: {} });
@@ -823,31 +816,14 @@
       return;
     }
 
-    if (!els.detailsConfirmed.checked) {
-      showToast(
-        "Confirm your details",
-        "Please check and confirm your profile and delivery address."
-      );
-      focusConfirmation(els.detailsConfirmed);
-      return;
-    }
-
-    if (!els.termsConfirmed.checked) {
-      showToast(
-        "One final confirmation",
-        "Please confirm your harvest details before placing the order."
-      );
-      focusConfirmation(els.termsConfirmed);
-      return;
-    }
-
     if (!formIsValid()) {
+      showToast("Add delivery details", "Sign in and select a delivery address before continuing.");
       return;
     }
 
     state.submitting = true;
     els.placeOrder.disabled = true;
-    els.placeOrder.textContent = "Confirming Harvest…";
+    els.placeOrder.textContent = "Preparing PayNow…";
 
     showConfirmingOverlay();
 
@@ -918,7 +894,7 @@
 
     } finally {
       state.submitting = false;
-      els.placeOrder.textContent = "Place Harvest Order";
+      els.placeOrder.textContent = "Continue to PayNow";
       updateCheckoutState();
     }
   }
@@ -974,15 +950,6 @@
   });
 
   els.form.addEventListener("input", updateCheckoutState);
-  els.detailsConfirmed.addEventListener(
-    "change",
-    updateCheckoutState
-  );
-  els.termsConfirmed.addEventListener(
-    "change",
-    updateCheckoutState
-  );
-
   document
     .querySelectorAll('input[name="paymentMethod"]')
     .forEach(input => {

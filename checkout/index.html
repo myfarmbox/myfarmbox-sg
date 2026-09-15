@@ -16,8 +16,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png">
   <link rel="manifest" href="/site.webmanifest">
 
-  <link rel="stylesheet" href="/shared.css?v=22">
-  <link rel="stylesheet" href="styles.css?v=52">
+  <link rel="stylesheet" href="/shared.css?v=23">
+  <link rel="stylesheet" href="styles.css?v=53">
 </head>
 <body>
   <div id="site-header"></div>
@@ -55,8 +55,8 @@
             <span>01</span>
             <div>
               <small>Faster checkout</small>
-              <h2>Sign in and we’ll remember the details.</h2>
-              <p>Returning members can confirm their saved delivery address and pay in moments.</p>
+              <h2>Sign in for a faster checkout.</h2>
+              <p>Returning members can select a saved delivery address and continue to payment.</p>
             </div>
           </header>
 
@@ -102,13 +102,13 @@
           </div>
         </section>
 
-        <section class="step-card locked" data-step-card="2">
+        <section class="step-card active" data-step-card="2">
           <header class="step-heading">
             <span>02</span>
             <div>
-              <small>Profile and address</small>
-              <h2>Is this delivery information correct?</h2>
-              <p>You can confirm the saved information or update it before continuing.</p>
+              <small>Delivery address</small>
+              <h2>Where should we deliver?</h2>
+              <p>Select one saved address. You can manage up to three addresses in My Account.</p>
             </div>
           </header>
 
@@ -124,7 +124,8 @@
           <div id="saved-addresses" class="saved-addresses" hidden></div>
           <a id="manage-addresses-link" class="manage-addresses-link" href="/account/" hidden>Manage or add an address →</a>
 
-          <form id="customer-form" novalidate>
+          <form id="customer-form" class="new-customer-form" novalidate>
+            <p class="new-customer-note">New here? Add your details once and we’ll save this address for your next harvest.</p>
             <div class="form-grid">
               <label>
                 <span>Full name</span>
@@ -175,26 +176,16 @@
             <input id="lat-long" name="latLong" type="hidden">
             <input id="source-waitlist-id" name="sourceWaitlistId" type="hidden">
 
-            <div class="confirmation-choice confirmation-card">
-              <label for="details-confirmed">
-                <input id="details-confirmed" type="checkbox">
-                <span class="confirmation-box" aria-hidden="true"></span>
-                <span class="confirmation-copy">
-                  <strong>Confirm my details</strong>
-                  <small>I’ve checked my name, contact number and delivery address.</small>
-                </span>
-              </label>
-            </div>
           </form>
         </section>
 
-        <section class="step-card locked" data-step-card="3">
+        <section class="step-card active" data-step-card="3">
           <header class="step-heading">
             <span>03</span>
             <div>
-              <small>Delivery and payment</small>
-              <h2>Confirm how your harvest will reach you.</h2>
-              <p>Your order will be scheduled according to the Singapore harvest cycle.</p>
+              <small>Payment</small>
+              <h2>Choose how you would like to pay.</h2>
+              <p>Your delivery is scheduled once your order and payment are confirmed.</p>
             </div>
           </header>
 
@@ -208,36 +199,25 @@
           </div>
 
           <div class="payment-section">
-            <h3>Payment preference</h3>
+            <h3>Payment method</h3>
 
             <div class="payment-options">
               <label>
                 <input type="radio" name="paymentMethod" value="PayNow" checked>
                 <span>
                   <b>PayNow</b>
-                  <small>Payment instructions will be shown after the order is created.</small>
+                  <small>Continue to PayNow instructions after placing your order.</small>
                 </span>
               </label>
 
-              <label>
-                <input type="radio" name="paymentMethod" value="Pay on Confirmation">
+              <label class="payment-coming-soon">
+                <input type="radio" name="paymentMethod" value="HitPay" disabled>
                 <span>
-                  <b>Confirm with Singapore Team</b>
-                  <small>Our team will contact you to complete payment.</small>
+                  <b>Card, Apple Pay & Google Pay <em>Coming soon</em></b>
+                  <small>Secure card and wallet payments will be available with HitPay.</small>
                 </span>
               </label>
             </div>
-          </div>
-
-          <div class="terms-confirmation confirmation-card">
-            <label for="terms-confirmed">
-              <input id="terms-confirmed" type="checkbox">
-              <span class="confirmation-box" aria-hidden="true"></span>
-              <span class="confirmation-copy">
-                <strong>Ready to place my harvest</strong>
-                <small>I’ve checked my order and understand that fresh produce availability may vary slightly with the harvest.</small>
-              </span>
-            </label>
           </div>
         </section>
       </div>
@@ -278,15 +258,15 @@
           </div>
 
           <div id="checkout-warning" class="checkout-warning">
-            Sign in or continue as a guest to continue.
+            Select a delivery address to continue.
           </div>
 
           <button id="place-order-button" class="place-order-button" type="button" disabled>
-            Place Harvest Order
+            Continue to PayNow
           </button>
 
           <p class="summary-note">
-            No payment is taken at this step. We’ll confirm your harvest and share payment details separately.
+            You will see PayNow instructions after your order is placed.
           </p>
         </div>
       </aside>
@@ -342,8 +322,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/auth.js?v=1"></script>
-  <script src="/shared.js?v=22"></script>
+  <script src="/shared.js?v=23"></script>
   <script src="/cart-engine.js?v=49"></script>
-  <script src="checkout.js?v=54"></script>
+  <script src="checkout.js?v=55"></script>
 </body>
 </html>

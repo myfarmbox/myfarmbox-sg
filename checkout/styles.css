@@ -306,6 +306,8 @@
 .saved-address-card small { color: var(--mfb-muted); font-size: 12px; }
 .saved-address-card.selected { border-color: var(--mfb-green); box-shadow: 0 0 0 3px rgba(67,141,53,.12); background: var(--mfb-green-light); }
 .manage-addresses-link { display: inline-block; margin: 2px 0 20px; color: var(--mfb-green-dark); font-size: 13px; font-weight: 700; }
+.new-customer-note { margin: 4px 0 18px; padding: 12px 14px; border-radius: 10px; background: #f6f7f2; color: var(--mfb-muted); font-size: 13px; line-height: 1.45; }
+.saved-addresses:not([hidden]) + .manage-addresses-link + .new-customer-form { display: none; }
 
 .profile-mark {
   width: 42px;
@@ -479,6 +481,10 @@
   background: var(--mfb-green-light);
   box-shadow: 0 0 0 2px rgba(67, 141, 53, 0.07);
 }
+
+.payment-coming-soon { cursor: not-allowed !important; }
+.payment-coming-soon span { opacity: .62; background: #f5f5f2; }
+.payment-coming-soon em { margin-left: 6px; color: var(--mfb-muted); font-size: 11px; font-style: normal; font-weight: 700; }
 
 .terms-row {
   margin-top: 18px;
