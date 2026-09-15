@@ -996,5 +996,11 @@
     window.location.href = "/";
   });
 
+  window.MFBAuth?.onChange(user => {
+    if (user?.email && !state.lookupComplete) {
+      loadSignedInProfile(user);
+    }
+  });
+
   initialise();
 })();
