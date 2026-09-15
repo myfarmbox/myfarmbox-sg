@@ -568,6 +568,7 @@
     els.authUserEmail.textContent = user.email;
     els.authMessage.textContent = "";
     localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ email: user.email }));
+    document.querySelector('[data-step-card="1"]')?.setAttribute("hidden", "");
 
     try {
       window.showMfbLoader?.("Loading your saved delivery details…");

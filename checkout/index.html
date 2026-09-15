@@ -17,7 +17,7 @@
   <link rel="manifest" href="/site.webmanifest">
 
   <link rel="stylesheet" href="/shared.css?v=24">
-  <link rel="stylesheet" href="styles.css?v=53">
+  <link rel="stylesheet" href="styles.css?v=54">
 </head>
 <body>
   <div id="site-header"></div>
@@ -25,12 +25,12 @@
   <main class="page-shell">
     <header class="page-heading">
       <div>
-        <p class="eyebrow">Confirm Harvest</p>
-        <h1>Review and confirm your harvest.</h1>
-        <p class="lead">Check your details, delivery and payment preference. It only takes a moment.</p>
+        <p class="eyebrow">Checkout</p>
+        <h1>Almost there.</h1>
+        <p class="lead">Choose delivery, then pay.</p>
       </div>
 
-      <a href="/cart/" class="back-link">← Back to My Harvest</a>
+      <a href="/cart/" class="back-link">← Cart</a>
     </header>
 
     <section id="guard-state" class="message-card">
@@ -55,8 +55,8 @@
             <span>01</span>
             <div>
               <small>Faster checkout</small>
-              <h2>Sign in for a faster checkout.</h2>
-              <p>Returning members can select a saved delivery address and continue to payment.</p>
+              <h2>Sign in</h2>
+              <p>Your saved address will be ready.</p>
             </div>
           </header>
 
@@ -108,7 +108,7 @@
             <div>
               <small>Delivery address</small>
               <h2>Where should we deliver?</h2>
-              <p>Select one saved address. You can manage up to three addresses in My Account.</p>
+              <p>Select where you would like this harvest delivered.</p>
             </div>
           </header>
 
@@ -185,16 +185,16 @@
             <div>
               <small>Payment</small>
               <h2>Choose how you would like to pay.</h2>
-              <p>Your delivery is scheduled once your order and payment are confirmed.</p>
+              <p>Pay securely using PayNow.</p>
             </div>
           </header>
 
-          <div class="delivery-confirmation">
+          <div class="delivery-confirmation delivery-confirmation-compact">
             <span aria-hidden="true">🚚</span>
             <div>
               <small>Expected delivery</small>
               <strong id="delivery-date">Sunday</strong>
-              <p>Between 9:00 a.m. and 9:00 p.m. Singapore time.</p>
+              <p>9:00 a.m. – 9:00 p.m.</p>
             </div>
           </div>
 
@@ -206,7 +206,7 @@
                 <input type="radio" name="paymentMethod" value="PayNow" checked>
                 <span>
                   <b>PayNow</b>
-                  <small>Continue to PayNow instructions after placing your order.</small>
+                  <small>Fast and secure.</small>
                 </span>
               </label>
 
@@ -214,7 +214,7 @@
                 <input type="radio" name="paymentMethod" value="HitPay" disabled>
                 <span>
                   <b>Card, Apple Pay & Google Pay <em>Coming soon</em></b>
-                  <small>Secure card and wallet payments will be available with HitPay.</small>
+                  <small>Available soon with HitPay.</small>
                 </span>
               </label>
             </div>
@@ -230,22 +230,22 @@
 
           <div class="summary-divider"></div>
 
-          <div class="summary-row">
+          <div class="summary-row summary-detail">
             <span>Harvest weight</span>
             <strong id="summary-weight">0.00 kg eq.</strong>
           </div>
 
-          <div class="summary-row">
+          <div class="summary-row summary-detail">
             <span>Products</span>
             <strong id="summary-subtotal">S$0.00</strong>
           </div>
 
-          <div class="summary-row">
+          <div class="summary-row summary-detail">
             <span>Delivery</span>
             <strong id="summary-delivery-fee">FREE</strong>
           </div>
 
-          <div class="summary-row">
+          <div class="summary-row summary-detail">
             <span>GST</span>
             <strong>Included</strong>
           </div>
@@ -322,8 +322,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/auth.js?v=1"></script>
-  <script src="/shared.js?v=24"></script>
+  <script src="/shared.js?v=25"></script>
   <script src="/cart-engine.js?v=49"></script>
-  <script src="checkout.js?v=56"></script>
+  <script src="checkout.js?v=57"></script>
 </body>
 </html>
