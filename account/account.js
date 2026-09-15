@@ -208,6 +208,8 @@
 
   function renderAccount() {
     const customer = account.customer || {};
+    const signedIn = readJson("mfb_sg_auth_user_v1", {});
+    if (signedIn.email) localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ ...signedIn, name: customer.name || signedIn.name }));
     const address = account.address || {};
     const addresses = Array.isArray(account.addresses) ? account.addresses : (address.addressId ? [address] : []);
     const orders = Array.isArray(account.orders)
@@ -1159,6 +1161,13 @@
   }
 
   async function initialise() {
+    if (window.location.hash === "#logout") {
+      await window.MFBAuth?.signOut();
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem("mfb_sg_auth_user_v1");
+      window.history.replaceState({}, "", "/account/");
+      return;
+    }
     const user = await window.MFBAuth?.getUser();
     if (user?.email) {
       localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ email: user.email }));
