@@ -13,18 +13,17 @@
   const NAV_ITEMS = [
     { label: "Home", href: "/" },
     { label: "Founding Harvest", href: "/join/" },
-    { label: "Products", href: "/products/" },
-    {
-      label: (() => {
-        try {
-          return JSON.parse(localStorage.getItem("mfb_sg_auth_user_v1") || "{}").email
-            ? "My Account"
-            : "Sign in";
-        } catch { return "Sign in"; }
-      })(),
-      href: "/account/"
-    }
+    { label: "Products", href: "/products/" }
   ];
+
+  function memberMenu() {
+    try {
+      const user = JSON.parse(localStorage.getItem("mfb_sg_auth_user_v1") || "{}");
+      if (!user.email) return '<a class="header-signin" href="/account/">Sign in</a>';
+      const name = String(user.name || user.email.split("@")[0]).split(/\s+/)[0];
+      return `<span class="header-greeting">Hi, ${name}</span><a class="header-account" href="/account/">My Account</a><a class="header-logout" href="/account/#logout">Logout</a>`;
+    } catch { return '<a class="header-signin" href="/account/">Sign in</a>'; }
+  }
 
   function isActivePath(href) {
     const path = window.location.pathname || "/";
@@ -102,6 +101,7 @@
         </nav>
 
         <div class="header-actions">
+          <div class="member-menu desktop-member-menu">${memberMenu()}</div>
           <a class="header-cart" href="/cart/" aria-label="Open cart">
             <span aria-hidden="true">🧺</span>
             <span class="header-cart-text">Cart</span>
@@ -266,6 +266,7 @@
   }
 
   window.updateSharedCartCount = updateSharedCartCount;
+  window.renderMfbHeader = renderHeader;
 
   function init() {
     renderHeader();

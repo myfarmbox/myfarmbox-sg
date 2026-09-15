@@ -322,6 +322,10 @@ textarea::placeholder { color: #98a39a; }
   justify-content: flex-end;
   gap: 10px;
 }
+.member-menu { display:flex; align-items:center; gap:9px; white-space:nowrap; }
+.header-greeting { color:var(--mfb-green-dark); font-size:13px; font-weight:800; }
+.header-account,.header-signin { padding:9px 11px; border-radius:9px; background:var(--mfb-green-light); color:var(--mfb-green-dark); font-size:13px; font-weight:800; }
+.header-logout { color:var(--mfb-muted); font-size:12px; font-weight:700; }
 
 .header-cart {
   min-height: 44px;
