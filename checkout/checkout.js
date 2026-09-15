@@ -66,6 +66,16 @@
     toastTitle: $("toast-title"),
     toastCopy: $("toast-copy"),
     confirmingOverlay: $("confirming-overlay")
+    ,authSignedOut: $("auth-signed-out")
+    ,authSignedIn: $("auth-signed-in")
+    ,authUserEmail: $("auth-user-email")
+    ,authMessage: $("auth-message")
+    ,googleLogin: $("google-login-button")
+    ,magicEmail: $("magic-link-email")
+    ,magicLogin: $("magic-link-button")
+    ,guestCheckout: $("guest-checkout-button")
+    ,guestLookup: $("guest-lookup")
+    ,signOut: $("sign-out-button")
   };
 
   function readJson(key, fallback) {
@@ -378,7 +388,7 @@
         ).toFixed(2)} kg equivalent to reach the minimum harvest.`;
       els.warning.className = "checkout-warning error";
     } else if (!state.lookupComplete) {
-      els.warning.textContent = "Find your profile to continue.";
+      els.warning.textContent = "Sign in or continue as a guest to continue.";
       els.warning.className = "checkout-warning";
     } else if (!els.detailsConfirmed.checked) {
       els.warning.textContent =
@@ -489,6 +499,72 @@
       els.lookupButton.disabled = false;
       els.lookupButton.textContent = "Find My Profile";
     }
+  }
+
+  async function loadSignedInProfile(user) {
+    if (!user?.email) return;
+    els.authSignedOut.hidden = true;
+    els.authSignedIn.hidden = false;
+    els.authUserEmail.textContent = user.email;
+    els.authMessage.textContent = "";
+
+    try {
+      const response = await fetch(`${API_URL}?action=getAccount&phone=&email=${encodeURIComponent(user.email)}`, { cache: "no-store" });
+      const data = await response.json();
+      if (data.ok && data.found) {
+        populateProfile({ found: true, source: "Customers", customer: data.customer, address: data.address });
+        els.lookupMessage.textContent = "Your saved profile and delivery address are ready to confirm.";
+        els.lookupMessage.className = "form-message success";
+      } else {
+        populateProfile({ found: false, source: "New Customer", customer: { email: user.email }, address: {} });
+        els.lookupMessage.textContent = "Welcome. Add your delivery details once; we’ll remember them for your next harvest.";
+        els.lookupMessage.className = "form-message success";
+      }
+    } catch {
+      populateProfile({ found: false, source: "New Customer", customer: { email: user.email }, address: {} });
+      els.lookupMessage.textContent = "Add your delivery details to continue.";
+      els.lookupMessage.className = "form-message";
+    }
+  }
+
+  async function startGoogleLogin() {
+    els.googleLogin.disabled = true;
+    els.googleLogin.textContent = "Opening Google…";
+    try { await window.MFBAuth.signInWithGoogle(); }
+    catch (error) {
+      els.authMessage.textContent = error.message || "Google sign-in could not start.";
+      els.authMessage.className = "form-message error";
+      els.googleLogin.disabled = false;
+      els.googleLogin.innerHTML = '<span aria-hidden="true">G</span> Continue with Google';
+    }
+  }
+
+  async function sendMagicLink() {
+    const email = els.magicEmail.value.trim();
+    if (!els.magicEmail.validity.valid || !email) {
+      els.authMessage.textContent = "Enter a valid email address.";
+      els.authMessage.className = "form-message error";
+      return;
+    }
+    els.magicLogin.disabled = true;
+    els.magicLogin.textContent = "Sending…";
+    try {
+      await window.MFBAuth.sendMagicLink(email);
+      els.authMessage.textContent = "Check your email and open the sign-in link to return here.";
+      els.authMessage.className = "form-message success";
+    } catch (error) {
+      els.authMessage.textContent = error.message || "We could not send the sign-in link.";
+      els.authMessage.className = "form-message error";
+    } finally {
+      els.magicLogin.disabled = false;
+      els.magicLogin.textContent = "Send link";
+    }
+  }
+
+  function openGuestCheckout() {
+    els.guestLookup.hidden = false;
+    els.guestCheckout.hidden = true;
+    els.lookupPhone.focus();
   }
 
   async function validateCheckout() {
@@ -814,6 +890,9 @@
         els.lookupPhone.value = session.phoneKey;
       }
 
+      const user = await window.MFBAuth?.getUser();
+      if (user) await loadSignedInProfile(user);
+
       if (draftData.delivery?.date) {
         els.deliveryDate.textContent =
           formatDeliveryDate(draftData.delivery.date);
@@ -831,6 +910,13 @@
   }
 
   els.lookupButton.addEventListener("click", lookupCustomer);
+  els.googleLogin.addEventListener("click", startGoogleLogin);
+  els.magicLogin.addEventListener("click", sendMagicLink);
+  els.guestCheckout.addEventListener("click", openGuestCheckout);
+  els.signOut.addEventListener("click", async () => {
+    await window.MFBAuth?.signOut();
+    window.location.reload();
+  });
 
   els.lookupPhone.addEventListener("keydown", event => {
     if (event.key === "Enter") {

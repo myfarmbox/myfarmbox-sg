@@ -212,6 +212,52 @@
   align-items: end;
 }
 
+.auth-signed-out {
+  max-width: 570px;
+}
+
+.google-login-button,
+.magic-link-row button {
+  min-height: 48px;
+  border-radius: var(--mfb-radius-sm);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.google-login-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #d8ddd5;
+  background: #fff;
+  color: #293127;
+}
+
+.google-login-button span { color: #4285f4; font-size: 19px; font-weight: 800; }
+.google-login-button:hover { border-color: rgba(67, 141, 53, .45); background: var(--mfb-green-light); }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--mfb-muted); font-size: 12px; }
+.auth-divider::before, .auth-divider::after { content: ""; height: 1px; flex: 1; background: var(--mfb-border); }
+.magic-link-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+.magic-link-row input { min-width: 0; min-height: 48px; }
+.magic-link-row button { border: 0; padding: 0 17px; background: var(--mfb-green); color: #fff; }
+.guest-checkout-button, .auth-signed-in button { margin-top: 14px; border: 0; padding: 0; background: transparent; color: var(--mfb-green-dark); font: inherit; font-size: 13px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.guest-lookup { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--mfb-border); }
+.guest-lookup-note { margin: 0 0 13px; color: var(--mfb-muted); font-size: 13px; }
+.auth-signed-in { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 14px; border-radius: var(--mfb-radius-sm); background: var(--mfb-green-light); }
+.auth-signed-in small, .auth-signed-in strong, .auth-signed-in span { display: block; }
+.auth-signed-in small { color: var(--mfb-green); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.auth-signed-in span { margin-top: 3px; color: var(--mfb-muted); font-size: 12px; }
+
+@media (max-width: 560px) {
+  .magic-link-row { grid-template-columns: 1fr; }
+  .auth-signed-in { grid-template-columns: auto 1fr; }
+  .auth-signed-in button { grid-column: 2; justify-self: start; margin-top: 0; }
+}
+
 .phone-row button {
   min-height: 48px;
   padding: 0 19px;

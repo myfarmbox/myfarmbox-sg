@@ -54,12 +54,33 @@
           <header class="step-heading">
             <span>01</span>
             <div>
-              <small>Customer lookup</small>
-              <h2>Let’s find your Founding Harvest profile.</h2>
-              <p>Enter the same mobile number used for the Singapore waitlist.</p>
+              <small>Faster checkout</small>
+              <h2>Sign in and we’ll remember the details.</h2>
+              <p>Returning members can confirm their saved delivery address and pay in moments.</p>
             </div>
           </header>
 
+          <div id="auth-signed-out" class="auth-signed-out">
+            <button id="google-login-button" class="google-login-button" type="button">
+              <span aria-hidden="true">G</span> Continue with Google
+            </button>
+            <div class="auth-divider"><span>or email me a sign-in link</span></div>
+            <div class="magic-link-row">
+              <input id="magic-link-email" type="email" autocomplete="email" placeholder="you@email.com" aria-label="Email address">
+              <button id="magic-link-button" type="button">Send link</button>
+            </div>
+            <p id="auth-message" class="form-message" aria-live="polite"></p>
+            <button id="guest-checkout-button" class="guest-checkout-button" type="button">Continue without signing in</button>
+          </div>
+
+          <div id="auth-signed-in" class="auth-signed-in" hidden>
+            <div class="profile-mark" aria-hidden="true">✓</div>
+            <div><small>Signed in securely</small><strong id="auth-user-email"></strong><span>We’re loading your saved delivery details.</span></div>
+            <button id="sign-out-button" type="button">Sign out</button>
+          </div>
+
+          <div id="guest-lookup" class="guest-lookup" hidden>
+            <p class="guest-lookup-note">You can check out as a guest. To find a previous profile, enter the same Singapore number used earlier.</p>
           <div class="phone-row">
             <label>
               <span>Singapore mobile number</span>
@@ -78,6 +99,7 @@
           </div>
 
           <p id="lookup-message" class="form-message" aria-live="polite"></p>
+          </div>
         </section>
 
         <section class="step-card locked" data-step-card="2">
@@ -253,7 +275,7 @@
           </div>
 
           <div id="checkout-warning" class="checkout-warning">
-            Find your profile to continue.
+            Sign in or continue as a guest to continue.
           </div>
 
           <button id="place-order-button" class="place-order-button" type="button" disabled>
@@ -315,8 +337,10 @@
 
   <div id="site-footer"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/auth.js?v=1"></script>
   <script src="/shared.js?v=22"></script>
   <script src="/cart-engine.js?v=49"></script>
-  <script src="checkout.js?v=52"></script>
+  <script src="checkout.js?v=53"></script>
 </body>
 </html>
