@@ -25,6 +25,10 @@
     loginEmail: $("login-email"),
     loginButton: $("login-button"),
     loginMessage: $("login-message"),
+    googleLogin: $("account-google-login"),
+    magicEmail: $("account-magic-email"),
+    magicLogin: $("account-magic-login"),
+    authMessage: $("account-auth-message"),
     avatar: $("avatar"),
     heroName: $("hero-name"),
     heroCustomerId: $("hero-customer-id"),
@@ -1117,6 +1121,8 @@
 
   function logout() {
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem("mfb_sg_auth_user_v1");
+    window.MFBAuth?.signOut();
     account = null;
     els.accountView.hidden = true;
     els.loginView.hidden = false;
@@ -1124,6 +1130,13 @@
   }
 
   async function initialise() {
+    const user = await window.MFBAuth?.getUser();
+    if (user?.email) {
+      localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ email: user.email }));
+      els.loginEmail.value = user.email;
+      await loadAccount("", user.email);
+      return;
+    }
     const session = readSession();
 
     if (session.phoneKey || session.email) {
@@ -1142,6 +1155,37 @@
       els.loginPhone.value,
       els.loginEmail.value
     );
+
+  els.googleLogin.onclick = async () => {
+    els.googleLogin.disabled = true;
+    els.googleLogin.textContent = "Opening Google…";
+    try {
+      await window.MFBAuth.signInWithGoogle(`${window.location.origin}/account/`);
+    } catch (error) {
+      els.authMessage.textContent = error.message || "Google sign-in could not start.";
+      els.googleLogin.disabled = false;
+      els.googleLogin.textContent = "Continue with Google";
+    }
+  };
+
+  els.magicLogin.onclick = async () => {
+    const email = els.magicEmail.value.trim();
+    if (!els.magicEmail.validity.valid || !email) {
+      els.authMessage.textContent = "Enter a valid email address.";
+      return;
+    }
+    els.magicLogin.disabled = true;
+    els.magicLogin.textContent = "Sending…";
+    try {
+      await window.MFBAuth.sendMagicLink(email, `${window.location.origin}/account/`);
+      els.authMessage.textContent = "Check your email and open the sign-in link.";
+    } catch (error) {
+      els.authMessage.textContent = error.message || "We could not send the sign-in link.";
+    } finally {
+      els.magicLogin.disabled = false;
+      els.magicLogin.textContent = "Send link";
+    }
+  };
 
   els.loginPhone.onkeydown = event => {
     if (event.key === "Enter") {

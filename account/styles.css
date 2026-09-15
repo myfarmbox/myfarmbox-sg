@@ -6,6 +6,19 @@
   display: none !important;
 }
 
+.account-auth-actions { margin: 24px 0 4px; }
+.primary-login, .account-magic-row button { min-height: 48px; border: 0; border-radius: 10px; background: var(--mfb-green); color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.primary-login { width: 100%; }
+.account-auth-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--mfb-muted); font-size: 12px; }
+.account-auth-divider::before, .account-auth-divider::after { content: ""; height: 1px; flex: 1; background: var(--mfb-border); }
+.account-magic-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+.account-magic-row input { min-height: 48px; min-width: 0; }
+.account-magic-row button { padding: 0 16px; }
+.manual-account-lookup { margin-top: 20px; border-top: 1px solid var(--mfb-border); padding-top: 16px; }
+.manual-account-lookup summary { color: var(--mfb-green-dark); cursor: pointer; font-size: 13px; font-weight: 700; }
+.manual-account-lookup .login-grid { margin-top: 16px; }
+@media (max-width: 520px) { .account-magic-row { grid-template-columns: 1fr; } }
+
 .shell {
   padding-top: 34px;
   padding-bottom: 80px;

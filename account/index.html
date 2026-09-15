@@ -23,7 +23,20 @@
       <div class="login-mark">🌿</div>
       <p class="eyebrow">My Account</p>
       <h1>Welcome back.</h1>
-      <p>Enter your mobile number and email to securely open your MyFarmBox Singapore profile.</p>
+      <p>Sign in once to see your saved delivery address, orders and harvest details.</p>
+
+      <div class="account-auth-actions">
+        <button id="account-google-login" type="button" class="primary-login">Continue with Google</button>
+        <div class="account-auth-divider"><span>or email me a sign-in link</span></div>
+        <div class="account-magic-row">
+          <input id="account-magic-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address">
+          <button id="account-magic-login" type="button">Send link</button>
+        </div>
+        <p id="account-auth-message" class="form-message"></p>
+      </div>
+
+      <details class="manual-account-lookup">
+        <summary>Use my mobile number and email instead</summary>
 
       <div class="login-grid">
         <label>
@@ -39,6 +52,7 @@
 
       <button id="login-button" type="button">Find My Account</button>
       <p id="login-message" class="form-message"></p>
+      </details>
     </section>
 
     <section id="account-view" hidden>
@@ -294,8 +308,10 @@
 
   <div id="site-footer"></div>
 
-  <script src="/shared.js?v=22"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/auth.js?v=1"></script>
+  <script src="/shared.js?v=23"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="account.js?v=28"></script>
+  <script src="account.js?v=29"></script>
 </body>
 </html>
