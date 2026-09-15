@@ -174,6 +174,7 @@
     els.loginMessage.textContent = "";
 
     try {
+      window.showMfbLoader?.("Loading your account…");
       const response = await fetch(accountQuery(phone, email), {
         cache: "no-store"
       });
@@ -201,6 +202,7 @@
       els.loginMessage.textContent =
         error.message || "Unable to open account.";
     } finally {
+      window.hideMfbLoader?.();
       els.loginButton.disabled = false;
       els.loginButton.textContent = "Find My Account";
     }
@@ -1014,18 +1016,23 @@
   }
 
   async function postAction(payload) {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    window.showMfbLoader?.("Saving your changes…");
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!data.ok) {
-      throw new Error(data.message || "Update failed.");
+      if (!data.ok) {
+        throw new Error(data.message || "Update failed.");
+      }
+
+      return data;
+    } finally {
+      window.hideMfbLoader?.();
     }
-
-    return data;
   }
 
   async function saveProfile() {
