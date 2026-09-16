@@ -124,6 +124,10 @@
         </div>
 
         <nav id="mobile-navigation" class="mobile-navigation" aria-label="Mobile navigation" hidden>
+          <div class="mobile-member-menu">
+            ${memberMenu()}
+          </div>
+
           ${navLinks()}
 
           <a href="/cart/">
