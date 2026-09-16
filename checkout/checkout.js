@@ -52,6 +52,9 @@
     deliveryInstructions: $("delivery-instructions"),
     latLong: $("lat-long"),
     sourceWaitlistId: $("source-waitlist-id"),
+    deliveryContactCard: $("delivery-contact-card"),
+    deliveryContactName: $("delivery-contact-name"),
+    deliveryContactPhone: $("delivery-contact-phone"),
     deliveryDate: $("delivery-date"),
     summaryItems: $("summary-items"),
     summaryWeight: $("summary-weight"),
@@ -429,7 +432,28 @@
     );
   }
 
+  function displayPhone(value) {
+    const digits = normalizePhone(value);
+    return digits.length === 10
+      ? `+${digits.slice(0, 2)} ${digits.slice(2, 6)} ${digits.slice(6)}`
+      : String(value || "").trim();
+  }
+
+  function renderDeliveryContact() {
+    const name = els.name.value.trim();
+    const phone = normalizePhone(els.phone.value);
+    const ready = Boolean(name && /^65[89]\d{7}$/.test(phone));
+
+    els.deliveryContactCard.hidden = !ready;
+
+    if (!ready) return;
+
+    els.deliveryContactName.textContent = name;
+    els.deliveryContactPhone.textContent = displayPhone(phone);
+  }
+
   function updateCheckoutState() {
+    renderDeliveryContact();
     const valid = formIsValid();
 
     els.placeOrder.disabled = !valid || state.submitting;

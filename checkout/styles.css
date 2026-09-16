@@ -500,6 +500,34 @@
 .found-profile { display: none !important; }
 .saved-addresses { margin-top: 4px; }
 .saved-address-card { padding: 13px; }
+.delivery-contact-card {
+  margin-top: 15px;
+  padding: 14px;
+  border: 1px solid var(--mfb-border);
+  border-radius: 12px;
+  background: #f8fbf6;
+}
+.delivery-contact-card small,
+.delivery-contact-card strong { display: block; }
+.delivery-contact-card small {
+  color: var(--mfb-green);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+}
+.delivery-contact-card strong {
+  margin-top: 3px;
+  color: var(--mfb-green-dark);
+  font-size: 14px;
+}
+.delivery-contact-card p {
+  margin: 8px 0 0;
+  color: var(--mfb-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.delivery-contact-card a { color: var(--mfb-green-dark); font-weight: 700; }
 .delivery-confirmation-compact { grid-template-columns: 40px 1fr; gap: 11px; padding: 13px; margin-bottom: 16px; }
 .delivery-confirmation-compact > span { width: 40px; height: 40px; font-size: 18px; }
 .delivery-confirmation-compact strong { font-size: 16px; }
