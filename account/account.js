@@ -15,6 +15,7 @@
   let addressMapObserver = null;
   let geocodeController = null;
   let editingAddressId = "";
+  let signedInEmail = "";
   const DEFAULT_MAP_CENTER = [1.3521, 103.8198];
 
   const $ = id => document.getElementById(id);
@@ -26,6 +27,14 @@
     loginEmail: $("login-email"),
     loginButton: $("login-button"),
     loginMessage: $("login-message"),
+    authActions: $("account-auth-actions"),
+    manualLookup: $("manual-account-lookup"),
+    profileSetup: $("profile-setup"),
+    profileSetupName: $("create-profile-name"),
+    profileSetupPhone: $("create-profile-phone"),
+    profileSetupEmail: $("create-profile-email"),
+    profileSetupButton: $("create-profile-button"),
+    profileSetupMessage: $("profile-setup-message"),
     googleLogin: $("account-google-login"),
     magicEmail: $("account-magic-email"),
     magicLogin: $("account-magic-login"),
@@ -177,6 +186,61 @@
     return `${API_URL}?${params.toString()}`;
   }
 
+  function showProfileSetup(email, suggestedName = "") {
+    els.authActions.hidden = true;
+    els.manualLookup.hidden = true;
+    els.profileSetup.hidden = false;
+    els.profileSetupEmail.value = email || "";
+    els.profileSetupName.value = suggestedName || "";
+    els.profileSetupPhone.value = "";
+    els.profileSetupMessage.textContent = "";
+  }
+
+  async function createProfile() {
+    const name = els.profileSetupName.value.trim();
+    const phone = normalizePhone(els.profileSetupPhone.value);
+    const email = signedInEmail || els.profileSetupEmail.value.trim();
+
+    if (!name) {
+      els.profileSetupMessage.textContent = "Enter your full name.";
+      return;
+    }
+
+    if (!/^65[89]\d{7}$/.test(phone)) {
+      els.profileSetupMessage.textContent =
+        "Enter a valid Singapore mobile number.";
+      return;
+    }
+
+    els.profileSetupButton.disabled = true;
+    els.profileSetupButton.textContent = "Creating profile…";
+
+    try {
+      window.showMfbLoader?.("Creating your delivery profile…");
+      const response = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "createCustomerProfile",
+          customer: { name, phone, email }
+        })
+      });
+      const data = await response.json();
+
+      if (!data.ok) {
+        throw new Error(data.message || "Could not create your profile.");
+      }
+
+      await loadAccount(phone, email);
+    } catch (error) {
+      els.profileSetupMessage.textContent =
+        error.message || "Could not create your profile.";
+    } finally {
+      window.hideMfbLoader?.();
+      els.profileSetupButton.disabled = false;
+      els.profileSetupButton.textContent = "Create delivery profile";
+    }
+  }
+
   async function loadAccount(phone, email) {
     els.loginButton.disabled = true;
     els.loginButton.textContent = "Opening Account…";
@@ -191,6 +255,14 @@
       const data = await response.json();
 
       if (!data.ok || !data.found) {
+        if (
+          signedInEmail &&
+          String(email).toLowerCase() === signedInEmail.toLowerCase()
+        ) {
+          showProfileSetup(signedInEmail);
+          return;
+        }
+
         throw new Error(
           data.message || "We couldn’t find a matching account."
         );
@@ -229,6 +301,7 @@
 
     els.loginView.hidden = true;
     els.accountView.hidden = false;
+    els.profileSetup.hidden = true;
 
     els.avatar.textContent = initials(customer.name);
     els.heroName.textContent = customer.name || "Member";
@@ -1187,6 +1260,7 @@
     }
     const user = await window.MFBAuth?.getUser();
     if (user?.email) {
+      signedInEmail = user.email;
       localStorage.setItem("mfb_sg_auth_user_v1", JSON.stringify({ email: user.email }));
       els.loginEmail.value = user.email;
       await loadAccount("", user.email);
@@ -1215,6 +1289,8 @@
   window.MFBAuth?.onChange(user => {
     if (!user?.email || account) return;
 
+    signedInEmail = user.email;
+
     localStorage.setItem(
       "mfb_sg_auth_user_v1",
       JSON.stringify({ email: user.email })
@@ -1229,6 +1305,14 @@
       els.loginPhone.value,
       els.loginEmail.value
     );
+
+  els.profileSetupButton.onclick = createProfile;
+  els.profileSetupPhone.onkeydown = event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      createProfile();
+    }
+  };
 
   els.googleLogin.onclick = async () => {
     els.googleLogin.disabled = true;
