@@ -9,6 +9,10 @@
   const CUSTOMER_SESSION_KEY = "mfb_sg_customer_session_v1";
   const PRODUCTS_CACHE_KEY = "mfb_sg_products_checkout_cache_v1";
   const PRODUCTS_CACHE_TTL_MS = 60 * 1000;
+  const DEFAULT_MAP_CENTER = [1.3521, 103.8198];
+
+  let deliveryMap = null;
+  let deliveryMarker = null;
 
   const state = {
     cart: [],
@@ -51,6 +55,9 @@
     placeName: $("place-name"),
     deliveryInstructions: $("delivery-instructions"),
     latLong: $("lat-long"),
+    deliveryMap: $("checkout-address-map"),
+    deliveryMapStatus: $("checkout-map-status"),
+    useCurrentLocation: $("use-current-location"),
     sourceWaitlistId: $("source-waitlist-id"),
     deliveryContactCard: $("delivery-contact-card"),
     deliveryContactName: $("delivery-contact-name"),
@@ -439,6 +446,145 @@
       : String(value || "").trim();
   }
 
+  function parseLatLong(value) {
+    const parts = String(value || "")
+      .split(",")
+      .map(part => Number(part.trim()));
+
+    if (
+      parts.length !== 2 ||
+      !Number.isFinite(parts[0]) ||
+      !Number.isFinite(parts[1])
+    ) return null;
+
+    return parts;
+  }
+
+  function setDeliveryPin(lat, lng, message) {
+    els.latLong.value =
+      `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
+    els.deliveryMapStatus.textContent = message;
+    els.deliveryMapStatus.className = "checkout-map-status ready";
+
+    if (!deliveryMap || typeof L === "undefined") return;
+
+    const point = [lat, lng];
+
+    if (!deliveryMarker) {
+      deliveryMarker = L.marker(point, {
+        draggable: true,
+        autoPan: true
+      }).addTo(deliveryMap);
+
+      deliveryMarker.on("dragend", event => {
+        const position = event.target.getLatLng();
+        setDeliveryPin(
+          position.lat,
+          position.lng,
+          "Delivery pin updated."
+        );
+      });
+    } else {
+      deliveryMarker.setLatLng(point);
+    }
+
+    deliveryMap.setView(point, Math.max(deliveryMap.getZoom(), 17), {
+      animate: false
+    });
+  }
+
+  function initialiseDeliveryMap() {
+    if (deliveryMap || !els.deliveryMap) return;
+
+    if (typeof L === "undefined") {
+      els.deliveryMapStatus.textContent =
+        "The map is unavailable right now. Your written address is enough to continue.";
+      return;
+    }
+
+    const buildMap = () => {
+      const rect = els.deliveryMap.getBoundingClientRect();
+      if (rect.width < 200 || rect.height < 160) {
+        window.setTimeout(buildMap, 80);
+        return;
+      }
+
+      const saved = parseLatLong(els.latLong.value);
+      const initial = saved || DEFAULT_MAP_CENTER;
+
+      deliveryMap = L.map(els.deliveryMap, {
+        zoomControl: true,
+        scrollWheelZoom: false
+      }).setView(initial, saved ? 17 : 11);
+
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 19,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }
+      ).addTo(deliveryMap);
+
+      deliveryMap.on("click", event => {
+        setDeliveryPin(
+          event.latlng.lat,
+          event.latlng.lng,
+          "Delivery pin added. Drag it to the exact entrance if needed."
+        );
+      });
+
+      if (saved) {
+        setDeliveryPin(
+          saved[0],
+          saved[1],
+          "Delivery pin loaded. Drag it if needed."
+        );
+      }
+
+      window.setTimeout(
+        () => deliveryMap?.invalidateSize({ animate: false }),
+        150
+      );
+    };
+
+    window.setTimeout(buildMap, 80);
+  }
+
+  function useCurrentLocationForDelivery() {
+    if (!navigator.geolocation) {
+      els.deliveryMapStatus.textContent =
+        "Current location is not supported on this device.";
+      return;
+    }
+
+    els.useCurrentLocation.disabled = true;
+    els.useCurrentLocation.textContent = "Finding…";
+    els.deliveryMapStatus.textContent = "Requesting your current location…";
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        initialiseDeliveryMap();
+        window.setTimeout(() => {
+          setDeliveryPin(
+            position.coords.latitude,
+            position.coords.longitude,
+            "Current location selected. Drag the pin if needed."
+          );
+        }, 120);
+        els.useCurrentLocation.disabled = false;
+        els.useCurrentLocation.textContent = "Use my location";
+      },
+      () => {
+        els.deliveryMapStatus.textContent =
+          "We couldn’t get your location. You can place the pin manually.";
+        els.useCurrentLocation.disabled = false;
+        els.useCurrentLocation.textContent = "Use my location";
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+  }
+
   function renderDeliveryContact() {
     const name = els.name.value.trim();
     const phone = normalizePhone(els.phone.value);
@@ -534,6 +680,9 @@
 
     unlockStep(2);
     unlockStep(3);
+    if (!(profile.addresses || []).length) {
+      initialiseDeliveryMap();
+    }
     updateCheckoutState();
   }
 
@@ -1068,6 +1217,10 @@
   });
 
   els.form.addEventListener("input", updateCheckoutState);
+  els.useCurrentLocation.addEventListener(
+    "click",
+    useCurrentLocationForDelivery
+  );
   document
     .querySelectorAll('input[name="paymentMethod"]')
     .forEach(input => {

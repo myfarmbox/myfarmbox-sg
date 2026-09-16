@@ -309,6 +309,65 @@
 .new-customer-note { margin: 4px 0 18px; padding: 12px 14px; border-radius: 10px; background: #f6f7f2; color: var(--mfb-muted); font-size: 13px; line-height: 1.45; }
 .saved-addresses:not([hidden]) + .manage-addresses-link + .new-customer-form { display: none; }
 
+.checkout-map-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--mfb-border);
+}
+
+.checkout-map-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.checkout-map-heading small {
+  display: block;
+  color: var(--mfb-green-dark);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .45px;
+  text-transform: uppercase;
+}
+
+.checkout-map-heading em {
+  color: var(--mfb-muted);
+  font-style: normal;
+}
+
+.checkout-map-heading p,
+.checkout-map-status {
+  margin: 4px 0 0;
+  color: var(--mfb-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.map-location-button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--mfb-border);
+  border-radius: 9px;
+  background: var(--mfb-white);
+  color: var(--mfb-green-dark);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.checkout-address-map {
+  height: 250px;
+  overflow: hidden;
+  border: 1px solid var(--mfb-border);
+  border-radius: 12px;
+  background: #edf4e9;
+}
+
+.checkout-map-status.ready { color: var(--mfb-green-dark); }
+
 .profile-mark {
   width: 42px;
   height: 42px;
@@ -1267,6 +1326,18 @@
 }
 
 @media (max-width: 650px) {
+  .checkout-map-heading {
+    display: grid;
+  }
+
+  .map-location-button {
+    width: 100%;
+  }
+
+  .checkout-address-map {
+    height: 220px;
+  }
+
   .confirming-overlay {
     padding: 18px;
   }
