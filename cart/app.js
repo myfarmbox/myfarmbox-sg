@@ -22,6 +22,12 @@ Order rules:
   const DRAFT_KEY =
     "mfb_sg_checkout_draft_v1";
 
+  const PRODUCTS_CACHE_KEY =
+    "mfb_sg_products_checkout_cache_v1";
+
+  const PRODUCTS_CACHE_TTL_MS =
+    60 * 1000;
+
   const MIN_DEFAULT = 5;
   const MAX_DEFAULT = 20;
 
@@ -1268,6 +1274,127 @@ Order rules:
     );
   }
 
+  function readFreshProductsCache() {
+    try {
+      const cache = JSON.parse(
+        localStorage.getItem(PRODUCTS_CACHE_KEY) || ""
+      );
+
+      if (
+        !cache ||
+        !cache.data ||
+        Date.now() - Number(cache.savedAt || 0) >
+          PRODUCTS_CACHE_TTL_MS
+      ) {
+        return null;
+      }
+
+      return cache.data;
+    } catch {
+      return null;
+    }
+  }
+
+  function applyCatalogue(data) {
+    minimumKg =
+      Number(
+        data.settings
+          ?.minimumOrderKg ||
+        MIN_DEFAULT
+      );
+
+    maximumKg =
+      Number(
+        data.settings
+          ?.maximumOrderKg ||
+        window.MFBCart
+          ?.maximumOrderEquivalentKg ||
+        MAX_DEFAULT
+      );
+
+    deliveryFee =
+      Number(
+        data.settings
+          ?.deliveryFee ||
+        0
+      );
+
+    const products =
+      Array.isArray(data.products)
+        ? data.products
+        : [];
+
+    if (!products.length) {
+      throw new Error(
+        "Product catalogue returned no products."
+      );
+    }
+
+    productMap =
+      new Map(
+        products.map(
+          product => [
+            product.handleId,
+            product
+          ]
+        )
+      );
+
+    catalogueVerified = true;
+
+    writeCart(
+      hydrateCartFromProducts(
+        readCart(),
+        products
+      )
+    );
+  }
+
+  async function refreshCatalogueInBackground() {
+    try {
+      const controller =
+        new AbortController();
+
+      const timeout =
+        setTimeout(
+          () => controller.abort(),
+          12000
+        );
+
+      const response =
+        await fetch(
+          `${API}?action=getProducts`,
+          {
+            cache: "no-store",
+            signal: controller.signal
+          }
+        );
+
+      clearTimeout(timeout);
+
+      const data =
+        await response.json();
+
+      localStorage.setItem(
+        PRODUCTS_CACHE_KEY,
+        JSON.stringify({
+          savedAt: Date.now(),
+          data
+        })
+      );
+
+      applyCatalogue(data);
+      render();
+    } catch (error) {
+      catalogueVerified = false;
+
+      console.error(
+        "Cart product refresh failed:",
+        error
+      );
+    }
+  }
+
   async function init() {
     restoreDraft();
 
@@ -1283,101 +1410,24 @@ Order rules:
       return;
     }
 
-    try {
-      const controller =
-        new AbortController();
-
-      const timeout =
-        setTimeout(
-          () =>
-            controller.abort(),
-          12000
-        );
-
-      const response =
-        await fetch(
-          `${API}?action=getProducts`,
-          {
-            cache: "no-store",
-            signal:
-              controller.signal
-          }
-        );
-
-      clearTimeout(timeout);
-
-      const data =
-        await response.json();
-
-      minimumKg =
-        Number(
-          data.settings
-            ?.minimumOrderKg ||
-          MIN_DEFAULT
-        );
-
-      maximumKg =
-        Number(
-          data.settings
-            ?.maximumOrderKg ||
-          window.MFBCart
-            ?.maximumOrderEquivalentKg ||
-          MAX_DEFAULT
-        );
-
-      deliveryFee =
-        Number(
-          data.settings
-            ?.deliveryFee ||
-          0
-        );
-
-      const products =
-        Array.isArray(data.products)
-          ? data.products
-          : [];
-
-      if (!products.length) {
-        throw new Error(
-          "Product catalogue returned no products."
-        );
-      }
-
-      productMap =
-        new Map(
-          products.map(
-            product => [
-              product.handleId,
-              product
-            ]
-          )
-        );
-
-      catalogueVerified = true;
-
-      const refreshed =
-        hydrateCartFromProducts(
-          readCart(),
-          products
-        );
-
-      writeCart(
-        refreshed
-      );
-
-    } catch (error) {
-      catalogueVerified = false;
-
-      console.error(
-        "Cart product refresh failed:",
-        error
-      );
-    }
-
     els.loading.hidden =
       true;
 
     render();
+
+    const cached =
+      readFreshProductsCache();
+
+    if (cached) {
+      try {
+        applyCatalogue(cached);
+        render();
+      } catch {
+        catalogueVerified = false;
+      }
+    }
+
+    refreshCatalogueInBackground();
   }
 
   els.clearBtn.onclick =
