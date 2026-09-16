@@ -13,6 +13,7 @@
 
   let deliveryMap = null;
   let deliveryMarker = null;
+  let deliveryGeocodeController = null;
 
   const state = {
     cart: [],
@@ -52,6 +53,7 @@
     unitNumber: $("unit-number"),
     building: $("building"),
     postalCode: $("postal-code"),
+    findDeliveryAddress: $("find-delivery-address"),
     placeName: $("place-name"),
     deliveryInstructions: $("delivery-instructions"),
     latLong: $("lat-long"),
@@ -460,13 +462,139 @@
     return parts;
   }
 
-  function setDeliveryPin(lat, lng, message) {
+  function formatMapAddress(address = {}) {
+    return [
+      address.house_number,
+      address.road || address.pedestrian || address.residential
+    ].filter(Boolean).join(" ") ||
+      address.building ||
+      address.amenity ||
+      address.neighbourhood ||
+      "";
+  }
+
+  function applyMapAddress(result) {
+    const address = result?.address || {};
+    const street = formatMapAddress(address);
+    const postalCode = String(address.postcode || "")
+      .replace(/\D/g, "")
+      .slice(0, 6);
+
+    if (street) els.addressLine.value = street;
+    if (postalCode) els.postalCode.value = postalCode;
+    if (address.building) els.building.value = address.building;
+
+    const placeName =
+      address.neighbourhood ||
+      address.suburb ||
+      address.quarter ||
+      address.city_district ||
+      "";
+
+    if (placeName) els.placeName.value = placeName;
+    updateCheckoutState();
+  }
+
+  async function reverseGeocodeDeliveryPin(lat, lng) {
+    if (deliveryGeocodeController) {
+      deliveryGeocodeController.abort();
+    }
+
+    deliveryGeocodeController = new AbortController();
+
+    try {
+      const response = await fetch(
+        "https://nominatim.openstreetmap.org/reverse?" +
+          new URLSearchParams({
+            format: "jsonv2",
+            addressdetails: "1",
+            lat: String(lat),
+            lon: String(lng)
+          }),
+        {
+          headers: { Accept: "application/json" },
+          signal: deliveryGeocodeController.signal
+        }
+      );
+
+      if (!response.ok) throw new Error("Location lookup failed.");
+
+      applyMapAddress(await response.json());
+      els.deliveryMapStatus.textContent =
+        "Address and delivery coordinates filled. Please verify the address.";
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        els.deliveryMapStatus.textContent =
+          "Delivery coordinates saved. Please complete or verify the written address.";
+      }
+    }
+  }
+
+  async function findDeliveryAddressOnMap() {
+    const postalCode = els.postalCode.value
+      .replace(/\D/g, "")
+      .slice(0, 6);
+    const writtenAddress = els.addressLine.value.trim();
+    const query = [writtenAddress, postalCode, "Singapore"]
+      .filter(Boolean)
+      .join(", ");
+
+    if (!postalCode && !writtenAddress) {
+      els.deliveryMapStatus.textContent =
+        "Enter a postal code or address first.";
+      return;
+    }
+
+    els.findDeliveryAddress.disabled = true;
+    els.findDeliveryAddress.textContent = "Finding…";
+    els.deliveryMapStatus.textContent = "Finding this delivery location…";
+
+    try {
+      const response = await fetch(
+        "https://nominatim.openstreetmap.org/search?" +
+          new URLSearchParams({
+            format: "jsonv2",
+            addressdetails: "1",
+            countrycodes: "sg",
+            limit: "1",
+            q: query
+          }),
+        { headers: { Accept: "application/json" } }
+      );
+      const results = await response.json();
+      const result = Array.isArray(results) ? results[0] : null;
+
+      if (!result) throw new Error("Address not found.");
+
+      initialiseDeliveryMap();
+      setDeliveryPin(
+        Number(result.lat),
+        Number(result.lon),
+        "Delivery location found. Drag the pin to the exact entrance if needed.",
+        true
+      );
+      applyMapAddress(result);
+    } catch {
+      els.deliveryMapStatus.textContent =
+        "We could not find that location. Try the postal code or move the pin manually.";
+    } finally {
+      els.findDeliveryAddress.disabled = false;
+      els.findDeliveryAddress.textContent = "Find on map";
+    }
+  }
+
+  function setDeliveryPin(lat, lng, message, populateAddress = false) {
     els.latLong.value =
       `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
     els.deliveryMapStatus.textContent = message;
     els.deliveryMapStatus.className = "checkout-map-status ready";
 
-    if (!deliveryMap || typeof L === "undefined") return;
+    if (!deliveryMap || typeof L === "undefined") {
+      if (populateAddress) {
+        reverseGeocodeDeliveryPin(lat, lng);
+      }
+      return;
+    }
 
     const point = [lat, lng];
 
@@ -481,7 +609,8 @@
         setDeliveryPin(
           position.lat,
           position.lng,
-          "Delivery pin updated."
+          "Delivery pin updated. Finding the address…",
+          true
         );
       });
     } else {
@@ -491,6 +620,10 @@
     deliveryMap.setView(point, Math.max(deliveryMap.getZoom(), 17), {
       animate: false
     });
+
+    if (populateAddress) {
+      reverseGeocodeDeliveryPin(lat, lng);
+    }
   }
 
   function initialiseDeliveryMap() {
@@ -530,7 +663,8 @@
         setDeliveryPin(
           event.latlng.lat,
           event.latlng.lng,
-          "Delivery pin added. Drag it to the exact entrance if needed."
+          "Delivery pin added. Finding the address…",
+          true
         );
       });
 
@@ -569,7 +703,8 @@
           setDeliveryPin(
             position.coords.latitude,
             position.coords.longitude,
-            "Current location selected. Drag the pin if needed."
+            "Current location selected. Finding the address…",
+            true
           );
         }, 120);
         els.useCurrentLocation.disabled = false;
@@ -1217,6 +1352,10 @@
   });
 
   els.form.addEventListener("input", updateCheckoutState);
+  els.findDeliveryAddress.addEventListener(
+    "click",
+    findDeliveryAddressOnMap
+  );
   els.useCurrentLocation.addEventListener(
     "click",
     useCurrentLocationForDelivery

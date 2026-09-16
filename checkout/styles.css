@@ -309,6 +309,24 @@
 .new-customer-note { margin: 4px 0 18px; padding: 12px 14px; border-radius: 10px; background: #f6f7f2; color: var(--mfb-muted); font-size: 13px; line-height: 1.45; }
 .saved-addresses:not([hidden]) + .manage-addresses-link + .new-customer-form { display: none; }
 
+.postal-code-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+
+.postal-code-control button {
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--mfb-border);
+  border-radius: 9px;
+  background: var(--mfb-white);
+  color: var(--mfb-green-dark);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .checkout-map-section {
   margin-top: 18px;
   padding-top: 18px;
@@ -920,6 +938,10 @@
 }
 
 @media (max-width: 650px) {
+  .postal-code-control {
+    grid-template-columns: 1fr;
+  }
+
   .page-shell {
     padding: 12px 10px 55px;
   }

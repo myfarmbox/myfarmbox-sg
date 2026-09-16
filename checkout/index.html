@@ -18,7 +18,7 @@
 
   <link rel="stylesheet" href="/shared.css?v=24">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="styles.css?v=56">
+  <link rel="stylesheet" href="styles.css?v=57">
 </head>
 <body>
   <div id="site-header"></div>
@@ -160,7 +160,10 @@
 
               <label>
                 <span>Postal code</span>
-                <input id="postal-code" name="postalCode" inputmode="numeric" maxlength="6" required>
+                <div class="postal-code-control">
+                  <input id="postal-code" name="postalCode" inputmode="numeric" maxlength="6" required>
+                  <button id="find-delivery-address" type="button">Find on map</button>
+                </div>
               </label>
 
               <label>
@@ -178,12 +181,12 @@
               <div class="checkout-map-heading">
                 <div>
                   <small id="delivery-pin-title">Delivery pin <em>Optional</em></small>
-                  <p>Drag the pin to the exact entrance so our driver can find you easily.</p>
+                  <p>Move the pin or enter your 6-digit postal code to mark your delivery location.</p>
                 </div>
                 <button id="use-current-location" type="button" class="map-location-button">Use my location</button>
               </div>
               <div id="checkout-address-map" class="checkout-address-map" aria-label="Delivery location map"></div>
-              <p id="checkout-map-status" class="checkout-map-status">Tap the map to add a pin, then drag it if needed.</p>
+              <p id="checkout-map-status" class="checkout-map-status">Tap or move the pin to fill the address and delivery coordinates automatically.</p>
             </section>
 
             <input id="lat-long" name="latLong" type="hidden">
@@ -355,6 +358,6 @@
   <script src="/shared.js?v=25"></script>
   <script src="/cart-engine.js?v=49"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="checkout.js?v=59"></script>
+  <script src="checkout.js?v=60"></script>
 </body>
 </html>
