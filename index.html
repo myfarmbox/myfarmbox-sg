@@ -380,6 +380,125 @@
     setTimeout(openFilm, 2000);
   })();
 </script>
+  <script>
+  (() => {
+    const FAQ_API_URL =
+      'https://script.google.com/macros/s/AKfycbx-lzPKRyzFoyuAhLT510wdZJPeugL419f4u19rgYUd-zEz-nA9YcHoYWoejvBSWnQ49w/exec?action=faqs';
+
+    const section = document.getElementById('member-questions');
+    const list = document.getElementById('home-faq-list');
+
+    // Shows instantly for repeat visitors; refreshes quietly in the background.
+    const storageKey = 'mfbsg-home-faqs-v1';
+    const cacheMinutes = 60;
+
+    function getSavedFaqs() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+
+        if (!saved || !Array.isArray(saved.faqs)) return null;
+
+        const age = Date.now() - saved.savedAt;
+        return {
+          faqs: saved.faqs,
+          fresh: age < cacheMinutes * 60 * 1000
+        };
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function saveFaqs(faqs) {
+      try {
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({
+            faqs: faqs,
+            savedAt: Date.now()
+          })
+        );
+      } catch (error) {
+        // FAQs will still load normally when browser storage is unavailable.
+      }
+    }
+
+    function renderFaqs(faqs) {
+      const featured = faqs
+        .filter(faq => faq.featured)
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .slice(0, 3);
+
+      if (!featured.length) return;
+
+      list.innerHTML = '';
+
+      featured.forEach((faq, index) => {
+        const item = document.createElement('article');
+        item.className = 'faq-item';
+
+        const question = document.createElement('button');
+        question.type = 'button';
+        question.className = 'faq-question';
+        question.setAttribute('aria-expanded', 'false');
+        question.setAttribute('aria-controls', `faq-answer-${index}`);
+
+        const questionText = document.createElement('span');
+        questionText.textContent = faq.question;
+
+        const icon = document.createElement('span');
+        icon.className = 'faq-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = '+';
+
+        const answer = document.createElement('div');
+        answer.className = 'faq-answer';
+        answer.id = `faq-answer-${index}`;
+        answer.hidden = true;
+        answer.textContent = faq.answer;
+
+        question.append(questionText, icon);
+
+        question.addEventListener('click', () => {
+          const isOpen = item.classList.toggle('is-open');
+          question.setAttribute('aria-expanded', String(isOpen));
+          answer.hidden = !isOpen;
+        });
+
+        item.append(question, answer);
+        list.appendChild(item);
+      });
+
+      section.hidden = false;
+    }
+
+    async function refreshFaqs() {
+      try {
+        const response = await fetch(FAQ_API_URL, { cache: 'no-store' });
+        const data = await response.json();
+
+        if (!data.ok || !Array.isArray(data.faqs)) return;
+
+        saveFaqs(data.faqs);
+        renderFaqs(data.faqs);
+      } catch (error) {
+        console.warn('FAQ section could not load.', error);
+      }
+    }
+
+    const saved = getSavedFaqs();
+
+    if (saved) {
+      // Instant display from the member’s browser cache.
+      renderFaqs(saved.faqs);
+
+      // Update only when the cached copy is older than one hour.
+      if (!saved.fresh) refreshFaqs();
+    } else {
+      // First visit: loads in the background and never delays the home page.
+      refreshFaqs();
+    }
+  })();
+</script>
   
 </body>
 </html>
